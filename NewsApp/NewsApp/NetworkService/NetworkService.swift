@@ -31,15 +31,28 @@ enum NetworkErrors: String, Error {
 
 protocol NetworkService: AnyObject {
     func fetchSpecificNews(text: String, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
+    func fetchNews(completion: @escaping(Result<NetworkModel, NetworkErrors>) -> Void)
 }
 
 
 final class NetworkServiceClass: NetworkService {
     
+    // MARK: - Properties
     let apiKey = "pub_503541093ea10db129d8cd81cf0710f827413"
 
+    var language: String {
+        get {
+            guard let preferredLanguage = Locale.preferredLanguages.first else { return "" }
+            let language = preferredLanguage.replacingOccurrences(of: "-", with: ",")
+            return language
+        }
+    }
+
+
+    // MARK: - Funcs
+    
     func fetchSpecificNews(text: String, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
-        guard let fetchedUrl = URL(string: "https://newsdata.io/api/1/news?apikey=\(apiKey)&language=ru,RU&q=\(text)") else { return }
+        guard let fetchedUrl = URL(string: "https://newsdata.io/api/1/news?apikey=\(apiKey)&language=\(language)&q=\(text)") else { return }
         let urlRequest = URLRequest(url: fetchedUrl)
         URLSession.shared.dataTask(with: urlRequest)  { data, response, error in
 
@@ -78,7 +91,7 @@ final class NetworkServiceClass: NetworkService {
 
 
     func fetchNews(completion: @escaping(Result<NetworkModel, NetworkErrors>) -> Void) {
-        guard let fetchedUrl = URL(string: "https://newsdata.io/api/1/news?apikey=\(apiKey)&language=ru,RU") else { return }
+        guard let fetchedUrl = URL(string: "https://newsdata.io/api/1/news?apikey=\(apiKey)&language=\(language)") else { return }
         let urlRequest = URLRequest(url: fetchedUrl)
 
         URLSession.shared.dataTask(with: urlRequest) { data, response, error in

@@ -7,30 +7,51 @@
 
 import UIKit
 
+protocol MainNewsVCDelegate: AnyObject {
+
+}
+
 class MainNewsViewController: UIViewController {
 
-    let networkService = NetworkServiceClass()
+    // MARK: - Properties
+    let mainView: MainNewsView
+    let networkService: NetworkService
+
+    // MARK: - LifeCycle
+
+    init(mainView: MainNewsView, networkService: NetworkService) {
+        self.mainView = mainView
+        self.networkService = networkService
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func loadView() {
+        super.loadView()
+        self.view = mainView
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let preferredLanguage = Locale.preferredLanguages.first {
-            print("System Language: \(preferredLanguage)")
-        } else {
-            print("Unable to retrieve system language.")
-        }
         view.backgroundColor = .systemBackground
-        networkService.fetchSpecificNews(text: "sports") { [weak self] result in
+        networkService.fetchNews { [weak self] result in
+            guard let self else { return }
             switch result {
             case .success(let success):
-                print(success.totalResults)
-                success.fetchedResults.forEach { element in
-                    print(element.title)
-                }
+                self.mainView.updateDataForView(data: success)
             case .failure(let failure):
                 print(failure.localizedDescription)
             }
         }
     }
 
-
+    // MARK: - Funcs
 }
 
+
+extension MainNewsViewController: MainNewsVCDelegate {
+    
+}
