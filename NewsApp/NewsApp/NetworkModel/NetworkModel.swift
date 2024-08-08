@@ -11,15 +11,18 @@ import Foundation
 final class NetworkModel: Codable {
     var totalResults: Int
     var fetchedResults: [ResultedFetch]
+    var nextPage: String
 
     private enum CodingKeys: String, CodingKey {
         case totalResults = "totalResults"
         case fetchedResults = "results"
+        case nextPage = "nextPage"
     }
 
-    init(totalResults: Int, fetchedResults: [ResultedFetch]) {
+    init(totalResults: Int, fetchedResults: [ResultedFetch], nextPage: String) {
         self.totalResults = totalResults
         self.fetchedResults = fetchedResults
+        self.nextPage = nextPage
     }
 }
 

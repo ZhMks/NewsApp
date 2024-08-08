@@ -10,9 +10,9 @@ import UIKit
 
 final class MainNewsView: UIView {
     // MARK: - Properties
-    var dataSourceForTable: NetworkModel? = nil
+   private var dataSourceForTable: [NetworkModel]? = []
 
-    weak var mainNewsVCDelegate: MainNewsVCDelegate?
+   weak var mainNewsVCDelegate: MainNewsVCDelegate?
 
     private lazy var newsTableView: UITableView = {
         let newsTableView = UITableView()
@@ -40,8 +40,9 @@ final class MainNewsView: UIView {
     func updateDataForView(data: NetworkModel) {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
-            self.dataSourceForTable = data
+            self.dataSourceForTable?.append(data)
             self.newsTableView.reloadData()
+            print(dataSourceForTable?.count)
         }
     }
 
@@ -61,25 +62,30 @@ final class MainNewsView: UIView {
         ])
     }
 
-    func setupTableView() {
+    private func setupTableView() {
         newsTableView.rowHeight = UITableView.automaticDimension
         newsTableView.estimatedRowHeight = 44.0
         newsTableView.tableFooterView = UIView()
         newsTableView.separatorStyle = .singleLine
+        newsTableView.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
     }
 }
 
 // MARK: -TableView DataSource
 extension MainNewsView: UITableViewDataSource {
 
+    func numberOfSections(in tableView: UITableView) -> Int {
+        guard let numberOfSections = dataSourceForTable?.count else { return 0 }
+        return numberOfSections
+    }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let numberOfRows = dataSourceForTable?.fetchedResults.count else { return 0 }
+        guard let numberOfRows = dataSourceForTable?[section].fetchedResults.count else { return 10 }
         return numberOfRows
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: MainNewsTableViewCell.identifier, for: indexPath) as? MainNewsTableViewCell else { return UITableViewCell() }
-        guard let networkModel = dataSourceForTable else { return UITableViewCell() }
+        guard let networkModel = dataSourceForTable?[indexPath.section] else { return UITableViewCell() }
         let dataForCell = networkModel.fetchedResults[indexPath.row]
         cell.updateCell(data: dataForCell)
         return cell
@@ -87,6 +93,15 @@ extension MainNewsView: UITableViewDataSource {
 }
 
 // MARK: - TableView Delegate
-extension MainNewsView: UITableViewDelegate {
+extension MainNewsView: UITableViewDelegate, UIScrollViewDelegate {
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let position = scrollView.contentOffset.y
+
+        if position > (newsTableView.contentSize.height - 100-scrollView.frame.size.height) {
+            guard let page = dataSourceForTable?.last?.nextPage else { return }
+            mainNewsVCDelegate?.fetchMoreNews(page: page, text: nil)
+        }
+    }
 
 }

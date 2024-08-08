@@ -30,8 +30,7 @@ enum NetworkErrors: String, Error {
 
 
 protocol NetworkService: AnyObject {
-    func fetchSpecificNews(text: String, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
-    func fetchNews(completion: @escaping(Result<NetworkModel, NetworkErrors>) -> Void)
+    func fetchNews(text: String?, page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
 }
 
 
@@ -39,6 +38,8 @@ final class NetworkServiceClass: NetworkService {
     
     // MARK: - Properties
     let apiKey = "pub_503541093ea10db129d8cd81cf0710f827413"
+
+    var isPaginating = false
 
     var language: String {
         get {
@@ -51,80 +52,66 @@ final class NetworkServiceClass: NetworkService {
 
     // MARK: - Funcs
     
-    func fetchSpecificNews(text: String, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
-        guard let fetchedUrl = URL(string: "https://newsdata.io/api/1/news?apikey=\(apiKey)&language=\(language)&q=\(text)") else { return }
-        let urlRequest = URLRequest(url: fetchedUrl)
-        URLSession.shared.dataTask(with: urlRequest)  { data, response, error in
-
-            if let _ = error {
-                completion(.failure(.accessError))
-            }
-
-            if let response = response as? HTTPURLResponse {
-                switch response.statusCode {
-                case 403:
+    func fetchNews(text: String?, page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
+        guard let url = createURL(text: text, page: page) else { return }
+        let urlRequest = URLRequest(url: url)
+        if isPaginating {
+            isPaginating = true
+        } else {
+            URLSession.shared.dataTask(with: urlRequest)  { data, response, error in
+                if let _ = error {
+                    self.isPaginating = false
                     completion(.failure(.accessError))
-                case 404:
-                    completion(.failure(.pageNotFound))
-                case 500:
-                    completion(.failure(.serverError))
-                case 200:
-                    if let data = data {
-                        let decoder = DecoderServiceClass()
-                        decoder.decodeData(data: data) { result in
-                            switch result {
-                            case .success(let success):
-                                completion(.success(success))
-                            case .failure(let failure):
-                                print(failure.localizedDescription)
-                                completion(.failure(.unknownError))
+                }
+
+                if let response = response as? HTTPURLResponse {
+                    switch response.statusCode {
+                    case 403:
+                        self.isPaginating = false
+                        completion(.failure(.accessError))
+                    case 404:
+                        self.isPaginating = false
+                        completion(.failure(.pageNotFound))
+                    case 500:
+                        self.isPaginating = false
+                        completion(.failure(.serverError))
+                    case 200:
+                        if let data = data {
+                            let decoder = DecoderServiceClass()
+                            decoder.decodeData(data: data) { [weak self] result in
+                                switch result {
+                                case .success(let success):
+                                    self?.isPaginating = false
+                                    completion(.success(success))
+                                case .failure(let failure):
+                                    print(failure.localizedDescription)
+                                    self?.isPaginating = false
+                                    completion(.failure(.unknownError))
+                                }
                             }
                         }
+                    default:
+                        self.isPaginating = false
+                        completion(.failure(.unknownError))
                     }
-                default:
-                    completion(.failure(.unknownError))
                 }
-            }
-
-        }.resume()
+            }.resume()
+        }
     }
 
+    private func createURL(text: String?, page: String?) -> URL? {
 
-    func fetchNews(completion: @escaping(Result<NetworkModel, NetworkErrors>) -> Void) {
-        guard let fetchedUrl = URL(string: "https://newsdata.io/api/1/news?apikey=\(apiKey)&language=\(language)") else { return }
-        let urlRequest = URLRequest(url: fetchedUrl)
+        var urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)"
 
-        URLSession.shared.dataTask(with: urlRequest) { data, response, error in
-            if let _ = error {
-                completion(.failure(.accessError))
+            if let text = text, !text.isEmpty {
+                urlString += "&q=\(text)"
             }
 
-            if let response = response as? HTTPURLResponse {
-                switch response.statusCode {
-                case 403:
-                    completion(.failure(.accessError))
-                case 404:
-                    completion(.failure(.pageNotFound))
-                case 500:
-                    completion(.failure(.serverError))
-                case 200:
-                    if let data = data {
-                        let decoder = DecoderServiceClass()
-                        decoder.decodeData(data: data) { result in
-                            switch result {
-                            case .success(let success):
-                                completion(.success(success))
-                            case .failure(let failure):
-                                print(failure.localizedDescription)
-                                completion(.failure(.unknownError))
-                            }
-                        }
-                    }
-                default:
-                    completion(.failure(.unknownError))
-                }
+            if let page = page, !page.isEmpty {
+                urlString += "&page=\(page)"
             }
 
-        }.resume()
+            return URL(string: urlString)
     }
+
 }
