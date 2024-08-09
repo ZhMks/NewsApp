@@ -19,14 +19,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let mainNewsView = MainNewsView()
         let networkService = NetworkServiceClass()
-        let coredataModelService = CoredataModelService()
-        let viewController = MainNewsViewController(mainView: mainNewsView, networkService: networkService, coredataModelService: coredataModelService)
+        let favouriteCoredataService = FavouriteModelService()
+        let viewController = MainNewsViewController(mainView: mainNewsView, networkService: networkService, favouritesCoredataService: favouriteCoredataService)
 
         let navigationController = UINavigationController(rootViewController: viewController)
         navigationController.tabBarItem = UITabBarItem(title: "Main", image: UIImage(systemName: "checkmark")!, tag: 0)
 
         let favouritesView = FavouriteNewsView()
-        let favouritesVC = FavouriteNewsViewController(favouritesView: favouritesView, networkService: networkService)
+        let favouritesVC = FavouriteNewsViewController(favouritesView: favouritesView, networkService: networkService, favouritesCoredataService: favouriteCoredataService)
         let favouriteNavigationVC = UINavigationController(rootViewController: favouritesVC)
         favouriteNavigationVC.tabBarItem = UITabBarItem(title: "Favourite", image: UIImage(systemName: "heart"), tag: 1)
 

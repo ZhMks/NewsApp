@@ -7,55 +7,6 @@
 
 import Foundation
 
-final class CoredataModelService {
-    private(set) var  modelsArray: [MainNewsModel]?
-    let coredataService = CoreDataService.shared
-
-    init() {
-        initialFetch()
-    }
-
-    private func initialFetch() {
-        let request = MainNewsModel.fetchRequest()
-        do {
-            modelsArray = try coredataService.context.fetch(request)
-        } catch {
-            modelsArray = []
-            print("Cannot fetch data for request")
-        }
-    }
-
-    func saveModelToCoreData(model: NetworkModel) {
-        guard let modelsArray = modelsArray else { return }
-
-        let modelToSave = MainNewsModel(context: coredataService.context)
-
-        modelToSave.nextPage = model.nextPage
-        modelToSave.totalResults = Int64(model.totalResults)
-
-        for element in model.fetchedResults {
-            saveDetailedNews(mainModel: modelToSave, networkModel: element)
-        }
-
-        coredataService.saveContext()
-        initialFetch()
-    }
-
-    func saveDetailedNews(mainModel: MainNewsModel, networkModel: ResultedFetch) {
-        guard let context = mainModel.managedObjectContext else { return }
-        let detailedModelToSave = DetailNewsModel(context: context)
-
-        detailedModelToSave.creator = networkModel.creator?.first
-        detailedModelToSave.imageURL = networkModel.imageUrl
-        detailedModelToSave.link = networkModel.link
-        detailedModelToSave.pubDate = networkModel.pubDate
-        detailedModelToSave.descriptiontext = networkModel.description
-        detailedModelToSave.title = networkModel.title
-    }
-
-}
-
-
 final class FavouriteModelService {
 
     private(set) var  modelsArray: [FavouriteNewsModel]?
@@ -77,7 +28,12 @@ final class FavouriteModelService {
 
 
     func saveToFavouriteModel(model: ResultedFetch) {
+        guard let modelsArray = self.modelsArray else { return }
         let favouriteToSave = FavouriteNewsModel(context: coredataService.context)
+
+        if modelsArray.contains(where: { $0.title == model.title }) {
+            return
+        }
 
         favouriteToSave.author = model.creator?.first
         favouriteToSave.imageURL = model.imageUrl
@@ -87,5 +43,6 @@ final class FavouriteModelService {
         favouriteToSave.pubDate = model.pubDate
 
         coredataService.saveContext()
+        initialFetch()
     }
 }

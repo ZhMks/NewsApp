@@ -15,12 +15,14 @@ class FavouriteNewsViewController: UIViewController {
     // MARK: - Properties
     let favouritesView: FavouriteNewsView
     let networkService: NetworkService
+    let favouritesCoredataService: FavouriteModelService
 
     // MARK: - Lifecycle
 
-    init(favouritesView: FavouriteNewsView, networkService: NetworkService) {
+    init(favouritesView: FavouriteNewsView, networkService: NetworkService, favouritesCoredataService: FavouriteModelService) {
         self.favouritesView = favouritesView
         self.networkService = networkService
+        self.favouritesCoredataService = favouritesCoredataService
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -47,8 +49,7 @@ class FavouriteNewsViewController: UIViewController {
     // MARK: - Funcs
 
     func updateView() {
-        let modelService = FavouriteModelService()
-        guard let modelsArray = modelService.modelsArray else { return }
+        guard let modelsArray = favouritesCoredataService.modelsArray else { return }
         print(modelsArray.count)
         favouritesView.updateDataForView(data: modelsArray, networkService: self.networkService)
     }

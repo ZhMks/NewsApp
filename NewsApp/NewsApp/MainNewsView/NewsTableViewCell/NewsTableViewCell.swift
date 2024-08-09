@@ -7,12 +7,18 @@
 
 import UIKit
 
+protocol MainNewsCellDelegate: AnyObject {
+    func saveIntoFavourites(data: ResultedFetch)
+}
+
 
 final class MainNewsTableViewCell: UITableViewCell {
     // MARK: - Properties
 
     static let identifier = String.mainNewsIdentifier
     var networkService: NetworkService?
+    var data: ResultedFetch?
+    weak var mainCellDelegate: MainNewsCellDelegate?
 
 
     private lazy var creatorLabel: UILabel = {
@@ -66,6 +72,14 @@ final class MainNewsTableViewCell: UITableViewCell {
         return publicationDate
     }()
 
+    private lazy var favouritesButton: UIButton = {
+        let favouritesButton = UIButton(type: .system)
+        favouritesButton.translatesAutoresizingMaskIntoConstraints = false
+        favouritesButton.setBackgroundImage(UIImage(systemName: "star"), for: .normal)
+        favouritesButton.addTarget(self, action: #selector(saveIntoFavourites(_:)), for: .touchUpInside)
+        return favouritesButton
+    }()
+
     // MARK: - Lifecycle
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -89,6 +103,8 @@ final class MainNewsTableViewCell: UITableViewCell {
     func updateCell(data: ResultedFetch, networkService: NetworkService) {
 
         self.networkService = networkService
+        self.data = data
+
         titleLabel.text = data.title
         shortDescriptionLabel.text = data.description
         newsLink.text = data.link
@@ -114,12 +130,18 @@ final class MainNewsTableViewCell: UITableViewCell {
 //        }
     }
 
+    @objc private func saveIntoFavourites(_ sender: UIButton) {
+        guard let data = self.data else { return }
+        mainCellDelegate?.saveIntoFavourites(data: data)
+    }
+
     private func addSubviews() {
         contentView.addSubview(titleLabel)
         contentView.addSubview(shortDescriptionLabel)
         contentView.addSubview(newsLink)
         contentView.addSubview(creatorLabel)
         contentView.addSubview(publicationDate)
+        contentView.addSubview(favouritesButton)
     }
 
     private func layout() {
@@ -128,7 +150,12 @@ final class MainNewsTableViewCell: UITableViewCell {
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 5),
-            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -50),
+
+            favouritesButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
+            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
+            favouritesButton.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
 
             shortDescriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 5),
             shortDescriptionLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 5),

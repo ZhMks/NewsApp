@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="22758" systemVersion="23F79" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
-    <entity name="DetailNewsModel" representedClassName="DetailNewsModel" syncable="YES" codeGenerationType="class">
-        <attribute name="creator" optional="YES" attributeType="String"/>
-        <attribute name="descriptiontext" optional="YES" attributeType="String"/>
-        <attribute name="imageURL" optional="YES" attributeType="String"/>
-        <attribute name="link" optional="YES" attributeType="String"/>
-        <attribute name="pubDate" optional="YES" attributeType="String"/>
-        <attribute name="title" optional="YES" attributeType="String"/>
-        <relationship name="mainNewsModel" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="MainNewsModel" inverseName="detailedNewsModel" inverseEntity="MainNewsModel"/>
-    </entity>
     <entity name="FavouriteNewsModel" representedClassName="FavouriteNewsModel" syncable="YES" codeGenerationType="class">
         <attribute name="author" optional="YES" attributeType="String"/>
         <attribute name="imageURL" optional="YES" attributeType="String"/>
@@ -16,10 +7,5 @@
         <attribute name="newsText" optional="YES" attributeType="String"/>
         <attribute name="pubDate" optional="YES" attributeType="String"/>
         <attribute name="title" optional="YES" attributeType="String"/>
-    </entity>
-    <entity name="MainNewsModel" representedClassName="MainNewsModel" syncable="YES" codeGenerationType="class">
-        <attribute name="nextPage" optional="YES" attributeType="String"/>
-        <attribute name="totalResults" optional="YES" attributeType="Integer 64" defaultValueString="0" usesScalarValueType="YES"/>
-        <relationship name="detailedNewsModel" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="DetailNewsModel" inverseName="mainNewsModel" inverseEntity="DetailNewsModel"/>
     </entity>
 </model>

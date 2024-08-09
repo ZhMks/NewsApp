@@ -8,6 +8,7 @@
 import UIKit
 
 
+
 final class MainNewsView: UIView {
     // MARK: - Properties
    private var dataSourceForTable: [NetworkModel]? = []
@@ -99,6 +100,7 @@ extension MainNewsView: UITableViewDataSource {
         let dataForCell = networkModel.fetchedResults[indexPath.row]
         guard let networkService = self.networkService else { return UITableViewCell() }
         cell.updateCell(data: dataForCell, networkService: networkService)
+        cell.mainCellDelegate = self
         return cell
     }
 }
@@ -119,6 +121,14 @@ extension MainNewsView: UITableViewDelegate, UIScrollViewDelegate {
         guard let fetchedModel = dataSourceForTable?[indexPath.section].fetchedResults[indexPath.row] else { return }
         mainNewsVCDelegate?.goToDetailNews(model: fetchedModel)
         tableView.deselectRow(at: indexPath, animated: true)
+    }
+
+}
+
+extension MainNewsView: MainNewsCellDelegate {
+
+    func saveIntoFavourites(data: ResultedFetch) {
+        mainNewsVCDelegate?.saveIntoFavourites(data: data)
     }
 
 }

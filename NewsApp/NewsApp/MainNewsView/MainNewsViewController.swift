@@ -10,6 +10,7 @@ import UIKit
 protocol MainNewsVCDelegate: AnyObject {
     func fetchMoreNews(page: String, text: String?)
     func goToDetailNews(model: ResultedFetch)
+    func saveIntoFavourites(data: ResultedFetch)
 }
 
 class MainNewsViewController: UIViewController {
@@ -17,14 +18,14 @@ class MainNewsViewController: UIViewController {
     // MARK: - Properties
    private let mainView: MainNewsView
    private let networkService: NetworkService
-    private let coredataModelService: CoredataModelService
+   private let favouritesCoredataService: FavouriteModelService
 
     // MARK: - LifeCycle
 
-    init(mainView: MainNewsView, networkService: NetworkService, coredataModelService: CoredataModelService) {
+    init(mainView: MainNewsView, networkService: NetworkService, favouritesCoredataService: FavouriteModelService) {
         self.mainView = mainView
         self.networkService = networkService
-        self.coredataModelService = coredataModelService
+        self.favouritesCoredataService = favouritesCoredataService
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -43,7 +44,6 @@ class MainNewsViewController: UIViewController {
         setupNavigation()
         fetchNews()
         mainView.mainNewsVCDelegate = self
-        print(coredataModelService.modelsArray)
     }
 
     // MARK: - Funcs
@@ -64,12 +64,6 @@ class MainNewsViewController: UIViewController {
             switch result {
             case .success(let success):
                 self.mainView.updateDataForView(data: success, networkService: self.networkService)
-                guard let coredataModel = coredataModelService.modelsArray else {return }
-                if coredataModel.isEmpty {
-                    DispatchQueue.global(qos: .background).async {
-                        self.coredataModelService.saveModelToCoreData(model: success)
-                    }
-                }
             case .failure(let failure):
                 print(failure.localizedDescription)
             }
@@ -79,6 +73,11 @@ class MainNewsViewController: UIViewController {
 
 
 extension MainNewsViewController: MainNewsVCDelegate {
+
+    func saveIntoFavourites(data: ResultedFetch) {
+        favouritesCoredataService.saveToFavouriteModel(model: data)
+    }
+    
     func fetchMoreNews(page: String, text: String?) {
         if networkService.isPaginating {
             mainView.addSpinningActivityIndicator()
