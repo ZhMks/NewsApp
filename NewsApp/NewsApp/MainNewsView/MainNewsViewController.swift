@@ -9,6 +9,7 @@ import UIKit
 
 protocol MainNewsVCDelegate: AnyObject {
     func fetchMoreNews(page: String, text: String?)
+    func goToDetailNews(model: ResultedFetch)
 }
 
 class MainNewsViewController: UIViewController {
@@ -16,12 +17,14 @@ class MainNewsViewController: UIViewController {
     // MARK: - Properties
    private let mainView: MainNewsView
    private let networkService: NetworkService
+    private let coredataModelService: CoredataModelService
 
     // MARK: - LifeCycle
 
-    init(mainView: MainNewsView, networkService: NetworkService) {
+    init(mainView: MainNewsView, networkService: NetworkService, coredataModelService: CoredataModelService) {
         self.mainView = mainView
         self.networkService = networkService
+        self.coredataModelService = coredataModelService
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -40,6 +43,7 @@ class MainNewsViewController: UIViewController {
         setupNavigation()
         fetchNews()
         mainView.mainNewsVCDelegate = self
+        print(coredataModelService.modelsArray)
     }
 
     // MARK: - Funcs
@@ -47,7 +51,6 @@ class MainNewsViewController: UIViewController {
     private func setupNavigation() {
         let title = "Главная"
         self.title = title
-        navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "magnifyingglass"), style: .plain, target: self, action: #selector(enableSearchField(_:)))
     }
 
@@ -60,8 +63,13 @@ class MainNewsViewController: UIViewController {
             guard let self else { return }
             switch result {
             case .success(let success):
-                print(success.nextPage)
-                self.mainView.updateDataForView(data: success)
+                self.mainView.updateDataForView(data: success, networkService: self.networkService)
+                guard let coredataModel = coredataModelService.modelsArray else {return }
+                if coredataModel.isEmpty {
+                    DispatchQueue.global(qos: .background).async {
+                        self.coredataModelService.saveModelToCoreData(model: success)
+                    }
+                }
             case .failure(let failure):
                 print(failure.localizedDescription)
             }
@@ -72,15 +80,23 @@ class MainNewsViewController: UIViewController {
 
 extension MainNewsViewController: MainNewsVCDelegate {
     func fetchMoreNews(page: String, text: String?) {
+        if networkService.isPaginating {
+            mainView.addSpinningActivityIndicator()
+        }
         networkService.fetchNews(text: text, page: page) { [weak self] result in
+            guard let self else { return }
             switch result {
             case .success(let success):
-                self?.mainView.updateDataForView(data: success)
+                self.mainView.updateDataForView(data: success, networkService: self.networkService)
             case .failure(let failure):
                 print(failure.localizedDescription)
             }
         }
     }
     
-    
+    func goToDetailNews(model: ResultedFetch) {
+        let detailNewsView = DetailNewsView(frame: .zero)
+        let detailNewsViewController = DetailNewsViewController(detailNewsView: detailNewsView, fetchedResult: model, networkService: self.networkService)
+        navigationController?.pushViewController(detailNewsViewController, animated: true)
+    }
 }

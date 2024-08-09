@@ -5,7 +5,7 @@
 //  Created by Максим Жуин on 08.08.2024.
 //
 
-import Foundation
+import UIKit
 
 
 enum NetworkErrors: String, Error {
@@ -30,7 +30,9 @@ enum NetworkErrors: String, Error {
 
 
 protocol NetworkService: AnyObject {
+    var isPaginating: Bool { get }
     func fetchNews(text: String?, page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
+    func fetchImage(imageUrl: String, completion: @escaping (Result<UIImage, NetworkErrors>) -> Void)
 }
 
 
@@ -58,6 +60,7 @@ final class NetworkServiceClass: NetworkService {
         if isPaginating {
             isPaginating = true
         } else {
+            isPaginating = true
             URLSession.shared.dataTask(with: urlRequest)  { data, response, error in
                 if let _ = error {
                     self.isPaginating = false
@@ -112,6 +115,40 @@ final class NetworkServiceClass: NetworkService {
             }
 
             return URL(string: urlString)
+    }
+
+    func fetchImage(imageUrl: String, completion: @escaping (Result<UIImage, NetworkErrors>) -> Void) {
+        guard let url = URL(string: imageUrl) else { return }
+        let urlRequest = URLRequest(url: url)
+
+        URLSession.shared.dataTask(with: urlRequest) { data, response, error in
+            if let _ = error {
+                self.isPaginating = false
+                completion(.failure(.accessError))
+            }
+
+            if let response = response as? HTTPURLResponse {
+                switch response.statusCode {
+                case 403:
+                    self.isPaginating = false
+                    completion(.failure(.accessError))
+                case 404:
+                    self.isPaginating = false
+                    completion(.failure(.pageNotFound))
+                case 500:
+                    self.isPaginating = false
+                    completion(.failure(.serverError))
+                case 200:
+                    if let data = data {
+                        guard let postImage = UIImage(data: data) else { return }
+                        completion(.success(postImage))
+                    }
+                default:
+                    self.isPaginating = false
+                    completion(.failure(.unknownError))
+                }
+            }
+        }.resume()
     }
 
 }

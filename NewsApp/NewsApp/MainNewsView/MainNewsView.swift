@@ -14,6 +14,8 @@ final class MainNewsView: UIView {
 
    weak var mainNewsVCDelegate: MainNewsVCDelegate?
 
+    var networkService: NetworkService?
+
     private lazy var newsTableView: UITableView = {
         let newsTableView = UITableView()
         newsTableView.translatesAutoresizingMaskIntoConstraints = false
@@ -37,12 +39,12 @@ final class MainNewsView: UIView {
     
     // MARK: - Funcs
 
-    func updateDataForView(data: NetworkModel) {
+    func updateDataForView(data: NetworkModel, networkService: NetworkService) {
+        self.networkService = networkService
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.dataSourceForTable?.append(data)
             self.newsTableView.reloadData()
-            print(dataSourceForTable?.count)
         }
     }
 
@@ -63,11 +65,19 @@ final class MainNewsView: UIView {
     }
 
     private func setupTableView() {
-        newsTableView.rowHeight = UITableView.automaticDimension
-        newsTableView.estimatedRowHeight = 44.0
+        newsTableView.estimatedRowHeight = 80.0
         newsTableView.tableFooterView = UIView()
         newsTableView.separatorStyle = .singleLine
         newsTableView.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+    }
+
+    func addSpinningActivityIndicator() {
+        let footerView = UIView(frame: CGRect(x: 0, y: 0, width: frame.size.width, height: 80))
+        let uiactivityindicator = UIActivityIndicatorView(style: .medium)
+        uiactivityindicator.center = footerView.center
+        footerView.addSubview(uiactivityindicator)
+        uiactivityindicator.startAnimating()
+        newsTableView.tableFooterView = footerView
     }
 }
 
@@ -87,7 +97,8 @@ extension MainNewsView: UITableViewDataSource {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: MainNewsTableViewCell.identifier, for: indexPath) as? MainNewsTableViewCell else { return UITableViewCell() }
         guard let networkModel = dataSourceForTable?[indexPath.section] else { return UITableViewCell() }
         let dataForCell = networkModel.fetchedResults[indexPath.row]
-        cell.updateCell(data: dataForCell)
+        guard let networkService = self.networkService else { return UITableViewCell() }
+        cell.updateCell(data: dataForCell, networkService: networkService)
         return cell
     }
 }
@@ -102,6 +113,12 @@ extension MainNewsView: UITableViewDelegate, UIScrollViewDelegate {
             guard let page = dataSourceForTable?.last?.nextPage else { return }
             mainNewsVCDelegate?.fetchMoreNews(page: page, text: nil)
         }
+    }
+
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let fetchedModel = dataSourceForTable?[indexPath.section].fetchedResults[indexPath.row] else { return }
+        mainNewsVCDelegate?.goToDetailNews(model: fetchedModel)
+        tableView.deselectRow(at: indexPath, animated: true)
     }
 
 }

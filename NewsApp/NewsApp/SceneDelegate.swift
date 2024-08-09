@@ -19,7 +19,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         let mainNewsView = MainNewsView()
         let networkService = NetworkServiceClass()
-        let viewController = MainNewsViewController(mainView: mainNewsView, networkService: networkService)
+        let coredataModelService = CoredataModelService()
+        let viewController = MainNewsViewController(mainView: mainNewsView, networkService: networkService, coredataModelService: coredataModelService)
 
         let navigationController = UINavigationController(rootViewController: viewController)
         navigationController.tabBarItem = UITabBarItem(title: "Main", image: UIImage(systemName: "checkmark")!, tag: 0)

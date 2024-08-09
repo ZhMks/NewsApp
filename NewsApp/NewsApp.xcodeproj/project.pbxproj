@@ -19,6 +19,10 @@
 		B25126C72C649E4B008B0D43 /* NetworkModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25126C62C649E4B008B0D43 /* NetworkModel.swift */; };
 		B25126C92C64A777008B0D43 /* MainNewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25126C82C64A777008B0D43 /* MainNewsView.swift */; };
 		B25126CC2C64A88C008B0D43 /* NewsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25126CB2C64A88C008B0D43 /* NewsTableViewCell.swift */; };
+		B25126CF2C6602DA008B0D43 /* DetailNewsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25126CE2C6602DA008B0D43 /* DetailNewsView.swift */; };
+		B25126D12C6602E5008B0D43 /* DetailNewsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25126D02C6602E5008B0D43 /* DetailNewsViewController.swift */; };
+		B25126D42C663EE6008B0D43 /* CoreDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25126D32C663EE6008B0D43 /* CoreDataService.swift */; };
+		B25126D62C6640A2008B0D43 /* CoredataModelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B25126D52C6640A2008B0D43 /* CoredataModelService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +40,10 @@
 		B25126C62C649E4B008B0D43 /* NetworkModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkModel.swift; sourceTree = "<group>"; };
 		B25126C82C64A777008B0D43 /* MainNewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainNewsView.swift; sourceTree = "<group>"; };
 		B25126CB2C64A88C008B0D43 /* NewsTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewsTableViewCell.swift; sourceTree = "<group>"; };
+		B25126CE2C6602DA008B0D43 /* DetailNewsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailNewsView.swift; sourceTree = "<group>"; };
+		B25126D02C6602E5008B0D43 /* DetailNewsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailNewsViewController.swift; sourceTree = "<group>"; };
+		B25126D32C663EE6008B0D43 /* CoreDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataService.swift; sourceTree = "<group>"; };
+		B25126D52C6640A2008B0D43 /* CoredataModelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoredataModelService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +76,8 @@
 		B25126A52C6498E4008B0D43 /* NewsApp */ = {
 			isa = PBXGroup;
 			children = (
+				B25126D22C663ED6008B0D43 /* CoredataService */,
+				B25126CD2C6602CE008B0D43 /* DetailNewsView */,
 				B25126C52C649E3C008B0D43 /* NetworkModel */,
 				B25126C02C64995A008B0D43 /* DecodeService */,
 				B25126BF2C64994A008B0D43 /* FavouriteNewsView */,
@@ -131,6 +141,24 @@
 				B25126CB2C64A88C008B0D43 /* NewsTableViewCell.swift */,
 			);
 			path = NewsTableViewCell;
+			sourceTree = "<group>";
+		};
+		B25126CD2C6602CE008B0D43 /* DetailNewsView */ = {
+			isa = PBXGroup;
+			children = (
+				B25126CE2C6602DA008B0D43 /* DetailNewsView.swift */,
+				B25126D02C6602E5008B0D43 /* DetailNewsViewController.swift */,
+			);
+			path = DetailNewsView;
+			sourceTree = "<group>";
+		};
+		B25126D22C663ED6008B0D43 /* CoredataService */ = {
+			isa = PBXGroup;
+			children = (
+				B25126D32C663EE6008B0D43 /* CoreDataService.swift */,
+				B25126D52C6640A2008B0D43 /* CoredataModelService.swift */,
+			);
+			path = CoredataService;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -208,6 +236,10 @@
 				B25126AB2C6498E4008B0D43 /* MainNewsViewController.swift in Sources */,
 				B25126C92C64A777008B0D43 /* MainNewsView.swift in Sources */,
 				B25126A72C6498E4008B0D43 /* AppDelegate.swift in Sources */,
+				B25126D42C663EE6008B0D43 /* CoreDataService.swift in Sources */,
+				B25126D62C6640A2008B0D43 /* CoredataModelService.swift in Sources */,
+				B25126CF2C6602DA008B0D43 /* DetailNewsView.swift in Sources */,
+				B25126D12C6602E5008B0D43 /* DetailNewsViewController.swift in Sources */,
 				B25126B12C6498E4008B0D43 /* NewsApp.xcdatamodeld in Sources */,
 				B25126C42C649BBC008B0D43 /* DecoderService.swift in Sources */,
 				B25126C72C649E4B008B0D43 /* NetworkModel.swift in Sources */,

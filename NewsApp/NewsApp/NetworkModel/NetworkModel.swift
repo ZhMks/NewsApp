@@ -31,7 +31,6 @@ final class ResultedFetch: Codable {
     var creator: [String]?
     var link: String
     var description: String?
-    var content: String
     var pubDate: String
     var imageUrl: String?
 
@@ -40,17 +39,15 @@ final class ResultedFetch: Codable {
         case creator = "creator"
         case link = "link"
         case description = "description"
-        case content = "content"
         case pubDate = "pubDate"
         case imageUrl = "image_url"
     }
 
-    init(title: String, creator: [String]?, link: String, description: String?, content: String, pubDate: String, imageUrl: String?) {
+    init(title: String, creator: [String]?, link: String, description: String?, pubDate: String, imageUrl: String?) {
         self.title = title
         self.creator = creator
         self.link = link
         self.description = description
-        self.content = content
         self.pubDate = pubDate
         self.imageUrl = imageUrl
     }
