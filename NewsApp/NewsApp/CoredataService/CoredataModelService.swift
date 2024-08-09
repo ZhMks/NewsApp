@@ -19,7 +19,6 @@ final class CoredataModelService {
         let request = MainNewsModel.fetchRequest()
         do {
             modelsArray = try coredataService.context.fetch(request)
-            print(modelsArray?.count)
         } catch {
             modelsArray = []
             print("Cannot fetch data for request")
@@ -52,5 +51,41 @@ final class CoredataModelService {
         detailedModelToSave.pubDate = networkModel.pubDate
         detailedModelToSave.descriptiontext = networkModel.description
         detailedModelToSave.title = networkModel.title
+    }
+
+}
+
+
+final class FavouriteModelService {
+
+    private(set) var  modelsArray: [FavouriteNewsModel]?
+    let coredataService = CoreDataService.shared
+
+    init() {
+        initialFetch()
+    }
+
+    private func initialFetch() {
+        let request = FavouriteNewsModel.fetchRequest()
+        do {
+            modelsArray = try coredataService.context.fetch(request)
+        } catch {
+            modelsArray = []
+            print("Cannot fetch data for request")
+        }
+    }
+
+
+    func saveToFavouriteModel(model: ResultedFetch) {
+        let favouriteToSave = FavouriteNewsModel(context: coredataService.context)
+
+        favouriteToSave.author = model.creator?.first
+        favouriteToSave.imageURL = model.imageUrl
+        favouriteToSave.title = model.title
+        favouriteToSave.newsText = model.description
+        favouriteToSave.link = model.link
+        favouriteToSave.pubDate = model.pubDate
+
+        coredataService.saveContext()
     }
 }

@@ -26,7 +26,7 @@ final class DetailNewsViewController: UIViewController {
         self.networkService = networkService
         super.init(nibName: nil, bundle: nil)
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -40,13 +40,25 @@ final class DetailNewsViewController: UIViewController {
         view.backgroundColor = .systemBackground
         detailNewsView.detailNewsVCDelegate = self
         updateViewData()
+        setupNavigationBar()
     }
-    
+
 
     // MARK: - Funcs
 
     private func updateViewData() {
         detailNewsView.updateViewData(data: self.fetchedResult, networkService: self.networkService)
+    }
+
+    private func setupNavigationBar() {
+        let rightButton = UIBarButtonItem(title: "Добавить в избранное", style: .plain, target: self, action: #selector(addToFavourite(_:)))
+        navigationItem.rightBarButtonItem = rightButton
+
+    }
+
+    @objc private func addToFavourite(_ sender: UIBarButtonItem) {
+        let favouriteService = FavouriteModelService()
+        favouriteService.saveToFavouriteModel(model: fetchedResult)
     }
 }
 
@@ -54,5 +66,5 @@ final class DetailNewsViewController: UIViewController {
 // MARK: - Delegate Methods
 
 extension DetailNewsViewController: DetailNewsVCDelegate {
-    
+
 }

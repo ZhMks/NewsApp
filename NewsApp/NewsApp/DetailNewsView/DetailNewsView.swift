@@ -18,6 +18,7 @@ final class DetailNewsView: UIView {
         newsTitle.translatesAutoresizingMaskIntoConstraints = false
         newsTitle.font = UIFont.boldSystemFont(ofSize: 20.0)
         newsTitle.textAlignment = .left
+        newsTitle.numberOfLines = 0
         return newsTitle
     }()
 
@@ -25,6 +26,7 @@ final class DetailNewsView: UIView {
         let newsImage = UIImageView()
         newsImage.translatesAutoresizingMaskIntoConstraints = false
         newsImage.contentMode = .scaleAspectFit
+        newsImage.clipsToBounds = true
         return newsImage
     }()
 
@@ -59,6 +61,7 @@ final class DetailNewsView: UIView {
         newsLink.font = UIFont.systemFont(ofSize: 12.0)
         newsLink.textColor = .systemBlue
         newsLink.textAlignment = .left
+        newsLink.numberOfLines = 0
         return newsLink
     }()
 
@@ -80,11 +83,11 @@ final class DetailNewsView: UIView {
 
     func updateViewData(data: ResultedFetch, networkService: NetworkService?) {
         self.networkService = networkService
-        newsTitle.text = data.title
+        newsTitle.attributedText = data.title.underLined
         newsText.text = data.description
         newsAuthor.text = data.creator?.first
         newsDate.text = data.pubDate
-        newsLink.text = data.link
+        newsLink.attributedText = data.link.underLined
 
         if let imageURl = data.imageUrl {
             networkService?.fetchImage(imageUrl: imageURl, completion: { [weak self] result in
@@ -92,7 +95,6 @@ final class DetailNewsView: UIView {
                 case .success(let fetchedImage):
                     DispatchQueue.main.async { 
                         self?.newsImage.image = fetchedImage
-                        self?.layoutIfNeeded()
                     }
                 case .failure(let failure):
                     print(failure.localizedDescription)
@@ -118,7 +120,7 @@ final class DetailNewsView: UIView {
         NSLayoutConstraint.activate( [
             newsTitle.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             newsTitle.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -110),
+            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
             newsTitle.bottomAnchor.constraint(equalTo: newsImage.topAnchor, constant: -10),
 
             newsImage.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 10),
@@ -134,17 +136,25 @@ final class DetailNewsView: UIView {
             newsAuthor.topAnchor.constraint(equalTo: newsText.bottomAnchor, constant: 10),
             newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            newsAuthor.bottomAnchor.constraint(equalTo: newsLink.topAnchor, constant: -5),
+            newsAuthor.heightAnchor.constraint(equalToConstant: 30),
 
             newsLink.topAnchor.constraint(equalTo: newsAuthor.bottomAnchor, constant: 10),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -50),
-            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            newsLink.heightAnchor.constraint(equalToConstant: 30),
 
-            newsDate.topAnchor.constraint(equalTo: newsAuthor.bottomAnchor, constant: 10),
-            newsDate.leadingAnchor.constraint(equalTo: newsLink.trailingAnchor, constant: 20),
+            newsDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
+            newsDate.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
-            newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30)
+            newsDate.heightAnchor.constraint(equalToConstant: 30)
         ] )
     }
+}
+
+ extension String {
+
+    var underLined: NSAttributedString {
+        NSMutableAttributedString(string: self, attributes: [.underlineStyle: NSUnderlineStyle.single.rawValue])
+    }
+
 }

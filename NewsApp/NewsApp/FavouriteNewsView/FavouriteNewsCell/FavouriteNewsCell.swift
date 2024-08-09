@@ -1,17 +1,18 @@
 //
-//  NewsTableViewCell.swift
+//  FavouriteNewsCell.swift
 //  NewsApp
 //
-//  Created by Максим Жуин on 08.08.2024.
+//  Created by Максим Жуин on 09.08.2024.
 //
 
 import UIKit
 
 
-final class MainNewsTableViewCell: UITableViewCell {
-    // MARK: - Properties
+final class FavouriteNewsCell: UITableViewCell {
 
-    static let identifier = String.mainNewsIdentifier
+    // MARK: - Properties
+    static let identifier = String.favouriteNewsIdentifier
+
     var networkService: NetworkService?
 
 
@@ -73,11 +74,11 @@ final class MainNewsTableViewCell: UITableViewCell {
         addSubviews()
         layout()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         shortImagePreview.image = nil
@@ -86,13 +87,14 @@ final class MainNewsTableViewCell: UITableViewCell {
 
     // MARK: - Funcs
 
-    func updateCell(data: ResultedFetch, networkService: NetworkService) {
+    func updateCell(data: FavouriteNewsModel, networkService: NetworkService) {
 
         self.networkService = networkService
+
         titleLabel.text = data.title
-        shortDescriptionLabel.text = data.description
+        shortDescriptionLabel.text = data.newsText
         newsLink.text = data.link
-        creatorLabel.text = data.creator?.first
+        creatorLabel.text = data.author
         publicationDate.text = data.pubDate
 
 //        if let imageURL = data.imageUrl {
@@ -195,9 +197,5 @@ final class MainNewsTableViewCell: UITableViewCell {
         contentView.addSubview(creatorLabel)
         contentView.addSubview(publicationDate)
     }
-}
 
- extension String {
-    static let mainNewsIdentifier = "MainNewsTableCell"
-     static let favouriteNewsIdentifier = "FavouriteNewsCell"
 }

@@ -25,8 +25,13 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         let navigationController = UINavigationController(rootViewController: viewController)
         navigationController.tabBarItem = UITabBarItem(title: "Main", image: UIImage(systemName: "checkmark")!, tag: 0)
 
+        let favouritesView = FavouriteNewsView()
+        let favouritesVC = FavouriteNewsViewController(favouritesView: favouritesView, networkService: networkService)
+        let favouriteNavigationVC = UINavigationController(rootViewController: favouritesVC)
+        favouriteNavigationVC.tabBarItem = UITabBarItem(title: "Favourite", image: UIImage(systemName: "heart"), tag: 1)
+
         let tabBarController = UITabBarController()
-        tabBarController.setViewControllers([navigationController], animated: true)
+        tabBarController.setViewControllers([navigationController, favouriteNavigationVC], animated: true)
         window.rootViewController = tabBarController
         window.makeKeyAndVisible()
         self.window = window
