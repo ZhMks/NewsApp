@@ -142,6 +142,9 @@ final class MainNewsTableViewCell: UITableViewCell {
             NSLayoutConstraint.deactivate(withImageConstraints)
             NSLayoutConstraint.activate(withoutImageConstraints)
         }
+
+        self.setNeedsLayout()
+        self.layoutIfNeeded()
     }
 
 
@@ -211,7 +214,7 @@ final class MainNewsTableViewCell: UITableViewCell {
             titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20),
-            titleLabel.bottomAnchor.constraint(equalTo: shortImagePreview.topAnchor, constant: -10),
+            titleLabel.bottomAnchor.constraint(equalTo: shortDescriptionLabel.topAnchor, constant: -10),
 
             shortDescriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
             shortDescriptionLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
