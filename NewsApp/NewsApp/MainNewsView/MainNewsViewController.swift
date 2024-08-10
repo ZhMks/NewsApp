@@ -8,7 +8,7 @@
 import UIKit
 
 protocol MainNewsVCDelegate: AnyObject {
-    func fetchMoreNews(page: String, text: String?)
+    func fetchMoreNews(page: String)
     func goToDetailNews(model: ResultedFetch)
     func saveIntoFavourites(data: ResultedFetch)
     func removeModelFromCoredata(data: ResultedFetch)
@@ -17,10 +17,10 @@ protocol MainNewsVCDelegate: AnyObject {
 class MainNewsViewController: UIViewController {
 
     // MARK: - Properties
-   private let mainView: MainNewsView
-   private let networkService: NetworkService
-   private let favouritesCoredataService: FavouriteModelService
-   private var fetchedNews: NetworkModel?
+    private let mainView: MainNewsView
+    private let networkService: NetworkService
+    private let favouritesCoredataService: FavouriteModelService
+    private var fetchedNews: NetworkModel?
 
     // MARK: - LifeCycle
 
@@ -52,19 +52,11 @@ class MainNewsViewController: UIViewController {
     // MARK: - Funcs
 
     private func setupNavigation() {
-        let title = "Главная"
-        self.title = title
-        let searchBar = UISearchBar(frame: CGRect(x: 0, y: 0, width: 100, height: 30))
-        let searchBarButtonItem = UIBarButtonItem(customView: searchBar)
-        navigationItem.rightBarButtonItem = searchBarButtonItem
-    }
-
-    @objc private func enableSearchField(_ sender: UIBarButtonItem) {
-
+        self.title = "Главная"
     }
 
     private func fetchNews() {
-        networkService.fetchNews(text: nil, page: nil) { [weak self] result in
+        networkService.fetchNews() { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let success):
@@ -80,9 +72,9 @@ class MainNewsViewController: UIViewController {
         }
     }
 
-   @objc private func reloadRows() {
-       guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
-       mainView.reloadTableViewRowsWith(data: favouriteNews)
+    @objc private func reloadRows() {
+        guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
+        mainView.reloadTableViewRowsWith(data: favouriteNews)
     }
 }
 
@@ -92,17 +84,17 @@ extension MainNewsViewController: MainNewsVCDelegate {
     func removeModelFromCoredata(data: ResultedFetch) {
         favouritesCoredataService.removeModelFromArray(model: data)
     }
-    
+
 
     func saveIntoFavourites(data: ResultedFetch) {
         favouritesCoredataService.saveToFavouriteModel(model: data)
     }
-    
-    func fetchMoreNews(page: String, text: String?) {
+
+    func fetchMoreNews(page: String) {
         if networkService.isPaginating {
             mainView.addSpinningActivityIndicator()
         }
-        networkService.fetchNews(text: text, page: page) { [weak self] result in
+        networkService.fetchNews() { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let success):
@@ -115,10 +107,15 @@ extension MainNewsViewController: MainNewsVCDelegate {
             }
         }
     }
-    
+
     func goToDetailNews(model: ResultedFetch) {
+
         let detailNewsView = DetailNewsView(frame: .zero)
+
         let detailNewsViewController = DetailNewsViewController(detailNewsView: detailNewsView, fetchedResult: model, networkService: self.networkService, favouritesService: self.favouritesCoredataService)
         navigationController?.pushViewController(detailNewsViewController, animated: true)
     }
 }
+
+
+

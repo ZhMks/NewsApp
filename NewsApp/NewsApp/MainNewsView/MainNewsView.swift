@@ -121,7 +121,7 @@ extension MainNewsView: UITableViewDelegate, UIScrollViewDelegate {
 
         if position > (newsTableView.contentSize.height - 100-scrollView.frame.size.height) {
             guard let page = dataSourceForTable?.last?.nextPage else { return }
-            mainNewsVCDelegate?.fetchMoreNews(page: page, text: nil)
+            mainNewsVCDelegate?.fetchMoreNews(page: page)
         }
     }
 

@@ -51,7 +51,6 @@ final class DetailNewsViewController: UIViewController {
     }
 
     private func setupNavigationBar() {
-
         let rightButton = UIBarButtonItem(title: "Добавить в избранное",
                                           style: .plain,
                                           target: self,
@@ -74,6 +73,10 @@ final class DetailNewsViewController: UIViewController {
         }
 
         NotificationCenter.default.post(name: NSNotification.Name(.buttonTouched), object: nil)
+    }
+
+    @objc func dismissController() {
+        self.navigationController?.popViewController(animated: true)
     }
 }
 

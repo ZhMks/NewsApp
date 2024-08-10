@@ -31,7 +31,7 @@ enum NetworkErrors: String, Error {
 
 protocol NetworkService: AnyObject {
     var isPaginating: Bool { get }
-    func fetchNews(text: String?, page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
+    func fetchNews(completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
     func fetchImage(imageUrl: String, completion: @escaping (Result<UIImage, NetworkErrors>) -> Void)
 }
 
@@ -54,8 +54,8 @@ final class NetworkServiceClass: NetworkService {
 
     // MARK: - Funcs
     
-    func fetchNews(text: String?, page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
-        guard let url = createURL(text: text, page: page) else { return }
+    func fetchNews(completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
+        guard let url = URL(string: "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)") else { return }
         let urlRequest = URLRequest(url: url)
         if isPaginating {
             isPaginating = true
@@ -100,21 +100,6 @@ final class NetworkServiceClass: NetworkService {
                 }
             }.resume()
         }
-    }
-
-    private func createURL(text: String?, page: String?) -> URL? {
-
-        var urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)"
-
-            if let text = text, !text.isEmpty {
-                urlString += "&q=\(text)"
-            }
-
-            if let page = page, !page.isEmpty {
-                urlString += "&page=\(page)"
-            }
-
-            return URL(string: urlString)
     }
 
     func fetchImage(imageUrl: String, completion: @escaping (Result<UIImage, NetworkErrors>) -> Void) {
