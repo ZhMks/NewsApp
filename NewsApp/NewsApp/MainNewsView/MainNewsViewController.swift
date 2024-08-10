@@ -54,7 +54,9 @@ class MainNewsViewController: UIViewController {
     private func setupNavigation() {
         let title = "Главная"
         self.title = title
-        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "magnifyingglass"), style: .plain, target: self, action: #selector(enableSearchField(_:)))
+        let searchBar = UISearchBar(frame: CGRect(x: 0, y: 0, width: 100, height: 30))
+        let searchBarButtonItem = UIBarButtonItem(customView: searchBar)
+        navigationItem.rightBarButtonItem = searchBarButtonItem
     }
 
     @objc private func enableSearchField(_ sender: UIBarButtonItem) {
