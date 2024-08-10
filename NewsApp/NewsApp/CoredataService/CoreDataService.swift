@@ -35,12 +35,16 @@ final class CoreDataService {
         if context.hasChanges {
             do {
                 try context.save()
-                print("Successs")
+                print("Success")
             } catch {
                 let nserror = error as NSError
                 fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
             }
         }
+    }
+
+    func deleteObject(model: FavouriteNewsModel) {
+        context.delete(model)
     }
 
 }

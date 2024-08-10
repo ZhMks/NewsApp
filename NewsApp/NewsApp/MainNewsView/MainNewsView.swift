@@ -16,6 +16,7 @@ final class MainNewsView: UIView {
    weak var mainNewsVCDelegate: MainNewsVCDelegate?
 
     var networkService: NetworkService?
+    private var favouriteNews: [FavouriteNewsModel]?
 
     private lazy var newsTableView: UITableView = {
         let newsTableView = UITableView()
@@ -40,8 +41,9 @@ final class MainNewsView: UIView {
     
     // MARK: - Funcs
 
-    func updateDataForView(data: NetworkModel, networkService: NetworkService) {
+    func updateDataForView(data: NetworkModel, networkService: NetworkService, favouritesNews: [FavouriteNewsModel]) {
         self.networkService = networkService
+        self.favouriteNews = favouritesNews
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.dataSourceForTable?.append(data)
@@ -80,6 +82,11 @@ final class MainNewsView: UIView {
         uiactivityindicator.startAnimating()
         newsTableView.tableFooterView = footerView
     }
+
+    func reloadTableViewRowsWith(data: [FavouriteNewsModel]) {
+        self.favouriteNews = data
+        self.newsTableView.reloadData()
+    }
 }
 
 // MARK: -TableView DataSource
@@ -99,7 +106,8 @@ extension MainNewsView: UITableViewDataSource {
         guard let networkModel = dataSourceForTable?[indexPath.section] else { return UITableViewCell() }
         let dataForCell = networkModel.fetchedResults[indexPath.row]
         guard let networkService = self.networkService else { return UITableViewCell() }
-        cell.updateCell(data: dataForCell, networkService: networkService)
+        guard let favouriteNews = self.favouriteNews else { return UITableViewCell() }
+        cell.updateCell(data: dataForCell, networkService: networkService, favouriteNews: favouriteNews)
         cell.mainCellDelegate = self
         return cell
     }
@@ -126,6 +134,11 @@ extension MainNewsView: UITableViewDelegate, UIScrollViewDelegate {
 }
 
 extension MainNewsView: MainNewsCellDelegate {
+    
+    func removeModelFromCoredata(data: ResultedFetch) {
+        mainNewsVCDelegate?.removeModelFromCoredata(data: data)
+    }
+    
 
     func saveIntoFavourites(data: ResultedFetch) {
         mainNewsVCDelegate?.saveIntoFavourites(data: data)

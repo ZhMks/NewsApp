@@ -11,6 +11,7 @@ protocol MainNewsVCDelegate: AnyObject {
     func fetchMoreNews(page: String, text: String?)
     func goToDetailNews(model: ResultedFetch)
     func saveIntoFavourites(data: ResultedFetch)
+    func removeModelFromCoredata(data: ResultedFetch)
 }
 
 class MainNewsViewController: UIViewController {
@@ -19,6 +20,7 @@ class MainNewsViewController: UIViewController {
    private let mainView: MainNewsView
    private let networkService: NetworkService
    private let favouritesCoredataService: FavouriteModelService
+   private var fetchedNews: NetworkModel?
 
     // MARK: - LifeCycle
 
@@ -36,6 +38,7 @@ class MainNewsViewController: UIViewController {
     override func loadView() {
         super.loadView()
         self.view = mainView
+        NotificationCenter.default.addObserver(self, selector: #selector(reloadRows), name: NSNotification.Name(.buttonTouched), object: nil)
     }
 
     override func viewDidLoad() {
@@ -63,16 +66,31 @@ class MainNewsViewController: UIViewController {
             guard let self else { return }
             switch result {
             case .success(let success):
-                self.mainView.updateDataForView(data: success, networkService: self.networkService)
+                self.fetchedNews = success
+                guard let fetchedNews = self.fetchedNews else { return }
+                guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
+                self.mainView.updateDataForView(data: fetchedNews,
+                                                networkService: self.networkService,
+                                                favouritesNews: favouriteNews)
             case .failure(let failure):
                 print(failure.localizedDescription)
             }
         }
     }
+
+   @objc private func reloadRows() {
+       guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
+       mainView.reloadTableViewRowsWith(data: favouriteNews)
+    }
 }
 
 
 extension MainNewsViewController: MainNewsVCDelegate {
+
+    func removeModelFromCoredata(data: ResultedFetch) {
+        favouritesCoredataService.removeModelFromArray(model: data)
+    }
+    
 
     func saveIntoFavourites(data: ResultedFetch) {
         favouritesCoredataService.saveToFavouriteModel(model: data)
@@ -86,7 +104,10 @@ extension MainNewsViewController: MainNewsVCDelegate {
             guard let self else { return }
             switch result {
             case .success(let success):
-                self.mainView.updateDataForView(data: success, networkService: self.networkService)
+                guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
+                self.mainView.updateDataForView(data: success,
+                                                networkService: self.networkService,
+                                                favouritesNews: favouriteNews)
             case .failure(let failure):
                 print(failure.localizedDescription)
             }
@@ -95,7 +116,7 @@ extension MainNewsViewController: MainNewsVCDelegate {
     
     func goToDetailNews(model: ResultedFetch) {
         let detailNewsView = DetailNewsView(frame: .zero)
-        let detailNewsViewController = DetailNewsViewController(detailNewsView: detailNewsView, fetchedResult: model, networkService: self.networkService)
+        let detailNewsViewController = DetailNewsViewController(detailNewsView: detailNewsView, fetchedResult: model, networkService: self.networkService, favouritesService: self.favouritesCoredataService)
         navigationController?.pushViewController(detailNewsViewController, animated: true)
     }
 }

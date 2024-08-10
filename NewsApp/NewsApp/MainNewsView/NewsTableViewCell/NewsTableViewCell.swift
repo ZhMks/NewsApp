@@ -9,6 +9,7 @@ import UIKit
 
 protocol MainNewsCellDelegate: AnyObject {
     func saveIntoFavourites(data: ResultedFetch)
+    func removeModelFromCoredata(data: ResultedFetch)
 }
 
 
@@ -95,15 +96,18 @@ final class MainNewsTableViewCell: UITableViewCell {
     override func prepareForReuse() {
         super.prepareForReuse()
         shortImagePreview.image = nil
+        favouritesButton.setBackgroundImage(UIImage(systemName: "star"), for: .normal)
     }
 
 
     // MARK: - Funcs
 
-    func updateCell(data: ResultedFetch, networkService: NetworkService) {
+    func updateCell(data: ResultedFetch, networkService: NetworkService, favouriteNews: [FavouriteNewsModel]) {
 
         self.networkService = networkService
         self.data = data
+
+        checkFavouriteNews(news: data, favouriteNews: favouriteNews)
 
         titleLabel.text = data.title
         shortDescriptionLabel.text = data.description
@@ -132,7 +136,20 @@ final class MainNewsTableViewCell: UITableViewCell {
 
     @objc private func saveIntoFavourites(_ sender: UIButton) {
         guard let data = self.data else { return }
-        mainCellDelegate?.saveIntoFavourites(data: data)
+
+        if sender.backgroundImage(for: .normal) == UIImage(systemName: "star") {
+            sender.setBackgroundImage(UIImage(systemName: "star.fill"), for: .normal)
+            mainCellDelegate?.saveIntoFavourites(data: data)
+        } else if sender.backgroundImage(for: .normal) == UIImage(systemName: "star.fill") {
+            sender.setBackgroundImage(UIImage(systemName: "star"), for: .normal)
+            mainCellDelegate?.removeModelFromCoredata(data: data)
+        }
+    }
+
+    private func checkFavouriteNews(news: ResultedFetch, favouriteNews: [FavouriteNewsModel]) {
+        if favouriteNews.contains(where: { $0.title == news.title }) {
+            favouritesButton.setBackgroundImage(UIImage(systemName: "star.fill"), for: .normal)
+        }
     }
 
     private func addSubviews() {
@@ -153,8 +170,8 @@ final class MainNewsTableViewCell: UITableViewCell {
             titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -50),
 
             favouritesButton.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
-            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
+            favouritesButton.heightAnchor.constraint(equalToConstant: 30),
+            favouritesButton.widthAnchor.constraint(equalToConstant: 30),
             favouritesButton.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
 
             shortDescriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 5),

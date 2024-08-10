@@ -45,4 +45,11 @@ final class FavouriteModelService {
         coredataService.saveContext()
         initialFetch()
     }
+
+    func removeModelFromArray(model: ResultedFetch) {
+        guard let modelToDelete = modelsArray?.first(where: { $0.title! == model.title }) else { return }
+        coredataService.deleteObject(model: modelToDelete)
+        coredataService.saveContext()
+        initialFetch()
+    }
 }

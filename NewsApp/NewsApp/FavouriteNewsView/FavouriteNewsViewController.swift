@@ -43,6 +43,7 @@ class FavouriteNewsViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         favouritesView.favouritesVCDelegate = self
+        NotificationCenter.default.addObserver(self, selector: #selector(reloadRowsWith), name: Notification.Name(.buttonTouched), object: nil)
     }
 
 
@@ -52,6 +53,11 @@ class FavouriteNewsViewController: UIViewController {
         guard let modelsArray = favouritesCoredataService.modelsArray else { return }
         print(modelsArray.count)
         favouritesView.updateDataForView(data: modelsArray, networkService: self.networkService)
+    }
+
+    @objc private func reloadRowsWith() {
+        guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
+        favouritesView.reloadTableViewRowsWith(data: favouriteNews)
     }
 }
 

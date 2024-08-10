@@ -64,6 +64,11 @@ final class FavouriteNewsView: UIView {
         newsTableView.separatorStyle = .singleLine
         newsTableView.separatorInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
     }
+
+    func reloadTableViewRowsWith(data: [FavouriteNewsModel]) {
+        self.favouriteNews = data
+        self.newsTableView.reloadData()
+    }
 }
 
 // MARK: - TableView DataSource
