@@ -8,6 +8,7 @@
 import UIKit
 
 protocol FavouriteNewsProtocol: AnyObject {
+    func goToDetailFavourite(model: FavouriteNewsModel)
 }
 
 class FavouriteNewsViewController: UIViewController {
@@ -64,5 +65,11 @@ class FavouriteNewsViewController: UIViewController {
 
 // MARK: - Delegate methods
 extension FavouriteNewsViewController: FavouriteNewsProtocol {
+    func goToDetailFavourite(model: FavouriteNewsModel) {
+        let favouriteDetailView = DetailFavouriteView()
+        let detailFavouriteVC = DetailFavouriteViewController(detailNewsView: favouriteDetailView, networkService: self.networkService, favouriteModel: model, favouriteService: self.favouritesCoredataService)
+        navigationController?.pushViewController(detailFavouriteVC, animated: true)
+    }
+    
 
 }

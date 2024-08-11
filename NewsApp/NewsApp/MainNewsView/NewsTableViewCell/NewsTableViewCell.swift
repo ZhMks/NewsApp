@@ -129,7 +129,10 @@ final class MainNewsTableViewCell: UITableViewCell {
     }
 
     private func updateImageAndDescription(with data: ResultedFetch) {
-        print("First function with data: \(data.description), image: \(data.imageUrl)")
+        
+        guard let brokenImage = UIImage(systemName: "photo.artframe") else { return }
+        updateUIWithImage(brokenImage, description: data.description)
+
         guard let imageUrl = data.imageUrl else {
             handleNoImage(data: data)
             return

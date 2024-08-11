@@ -82,7 +82,7 @@ class MainNewsViewController: UIViewController {
 extension MainNewsViewController: MainNewsVCDelegate {
 
     func removeModelFromCoredata(data: ResultedFetch) {
-        favouritesCoredataService.removeModelFromArray(model: data)
+        favouritesCoredataService.remove(fetchedModel: data, savedModel: nil)
     }
 
 

@@ -93,5 +93,9 @@ extension FavouriteNewsView: UITableViewDataSource {
 
 // MARK: - TableView Delegate
 extension FavouriteNewsView: UITableViewDelegate {
-
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        guard let favouriteNews = self.favouriteNews?[indexPath.row] else { return }
+        favouritesVCDelegate?.goToDetailFavourite(model: favouriteNews)
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
 }

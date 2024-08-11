@@ -69,7 +69,7 @@ final class DetailNewsViewController: UIViewController {
         if sender.title == "Добавить в избранное" {
             favouritesService.saveToFavouriteModel(model: fetchedResult)
         } else {
-            favouritesService.removeModelFromArray(model: fetchedResult)
+            favouritesService.remove(fetchedModel: fetchedResult, savedModel: nil)
         }
 
         NotificationCenter.default.post(name: NSNotification.Name(.buttonTouched), object: nil)
