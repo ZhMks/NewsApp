@@ -82,7 +82,7 @@ extension FavouriteNewsView: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: FavouriteNewsCell.identifier, for: indexPath) as? FavouriteNewsCell else { return UITableViewCell() }
         guard let dataForCell = favouriteNews?[indexPath.row] else { return UITableViewCell() }
-        cell.updateCell(data: dataForCell, networkService: self.networkService!)
+        cell.updateCell(with: dataForCell, networkService: self.networkService!)
         return cell
     }
     
