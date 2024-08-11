@@ -15,7 +15,8 @@ final class DetailNewsView: UIView {
 
     private var withImageConstraints: [NSLayoutConstraint] = []
     private var withoutImageConstraints: [NSLayoutConstraint] = []
-    private var withoutDescriptionConstraints: [NSLayoutConstraint] = []
+    private var withoutDescriptionWithoutImage: [NSLayoutConstraint] = []
+    private var withImageWithoutDescr: [NSLayoutConstraint] = []
 
     private lazy var newsTitle: UILabel = {
         let newsTitle = UILabel()
@@ -87,40 +88,104 @@ final class DetailNewsView: UIView {
 
     func updateViewData(data: ResultedFetch, networkService: NetworkService?) {
         self.networkService = networkService
-        newsTitle.attributedText = data.title.underLined
-        newsText.text = data.description
+        print("DATA FOR VIEW: \(data.description), title: \(data.title), image: \(data.imageUrl)")
+        configureLabels(with: data)
+        updateImageAndDescription(with: data)
+
+        setNeedsUpdateConstraints()
+        layoutIfNeeded()
+    }
+
+    private func configureLabels(with data: ResultedFetch) {
+        newsTitle.text = data.title
+        newsLink.text = data.link
         newsAuthor.text = data.creator?.first
         newsDate.text = data.pubDate
-        newsLink.attributedText = data.link.underLined
+    }
 
-        if let imageURl = data.imageUrl {
-            networkService?.fetchImage(imageUrl: imageURl, completion: { [weak self] result in
-                guard let self else { return }
-                switch result {
-                case .success(let fetchedImage):
-                    DispatchQueue.main.async { 
-                        self.newsImage.image = fetchedImage
-                        self.newsImage.isHidden = false
-                        NSLayoutConstraint.deactivate(self.withoutImageConstraints)
-                        NSLayoutConstraint.activate(self.withImageConstraints)
-                        self.setNeedsLayout()
-                        self.layoutIfNeeded()
-                    }
-                case .failure(let failure):
-                    print(failure.localizedDescription)
-                    return
-                }
-            })
-        } else {
-            newsImage.image = nil
-            newsImage.isHidden = true
-            NSLayoutConstraint.deactivate(withoutDescriptionConstraints)
-            NSLayoutConstraint.deactivate(withImageConstraints)
-            NSLayoutConstraint.activate(withoutImageConstraints)
+    private func updateImageAndDescription(with data: ResultedFetch) {
+        guard let brokenImage = UIImage(systemName: "photo.artframe") else { return }
+        updateUIWithImage(brokenImage, description: data.description)
+
+        guard let imageUrl = data.imageUrl else {
+            handleNoImage(data: data)
+            return
         }
 
-        updateConstraints()
-        layoutIfNeeded()
+        networkService!.fetchImage(imageUrl: imageUrl) { [weak self] result in
+            guard let self = self else { return }
+
+            switch result {
+            case .success(let fetchedImage):
+                DispatchQueue.main.async {
+                    self.updateUIWithImage(fetchedImage, description: data.description)
+                }
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self.updateUIWithImage(brokenImage, description: data.description)
+                }
+                print(error.localizedDescription)
+            }
+        }
+    }
+
+    private func handleNoImage(data: ResultedFetch) {
+
+        if data.description == nil {
+            updateUIWithNoImageNoDescription()
+        } else {
+            updateUIWithNoImage(with: data.description)
+        }
+    }
+
+    private func updateUIWithImage(_ image: UIImage, description: String?) {
+
+        newsImage.image = image
+        newsImage.isHidden = false
+        newsText.text = description
+        newsText.isHidden = false
+
+        NSLayoutConstraint.deactivate(withoutImageConstraints)
+        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
+        NSLayoutConstraint.deactivate(withImageConstraints)
+        NSLayoutConstraint.deactivate(withImageWithoutDescr)
+
+        if let description = description, !description.isEmpty {
+            NSLayoutConstraint.activate(withImageConstraints)
+        } else {
+            NSLayoutConstraint.activate(withImageWithoutDescr)
+        }
+    }
+
+
+    private func updateUIWithNoImageNoDescription() {
+        newsImage.image = nil
+        newsImage.isHidden = true
+        newsText.text = nil
+        newsText.isHidden = true
+
+        NSLayoutConstraint.deactivate(withoutImageConstraints)
+        NSLayoutConstraint.deactivate(withImageConstraints)
+        NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
+    }
+
+    private func updateUIWithNoImage(with description: String?) {
+
+        newsImage.image = nil
+        newsImage.isHidden = true
+        newsText.text = description
+        newsText.isHidden = false
+
+        NSLayoutConstraint.deactivate(withoutImageConstraints)
+        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
+        NSLayoutConstraint.deactivate(withImageConstraints)
+        NSLayoutConstraint.deactivate(withImageWithoutDescr)
+
+        if let description = description, !description.isEmpty {
+            NSLayoutConstraint.activate(withoutImageConstraints)
+        } else {
+            NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
+        }
     }
 
     private func addSubviews() {
@@ -139,86 +204,109 @@ final class DetailNewsView: UIView {
         withImageConstraints = [
             newsTitle.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             newsTitle.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20),
-            newsTitle.bottomAnchor.constraint(equalTo: newsImage.topAnchor, constant: -10),
+            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -50),
+            newsTitle.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
 
-            newsImage.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 10),
-            newsImage.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
-            newsImage.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
+            newsImage.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 120),
+            newsImage.heightAnchor.constraint(equalToConstant: 160),
+            newsImage.widthAnchor.constraint(equalToConstant: 180),
             newsImage.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
 
             newsText.topAnchor.constraint(equalTo: newsImage.bottomAnchor, constant: 10),
             newsText.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsText.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            newsText.bottomAnchor.constraint(equalTo: newsLink.topAnchor, constant: -10),
+            newsText.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
 
             newsLink.topAnchor.constraint(equalTo: newsText.bottomAnchor, constant: 10),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
-            newsLink.bottomAnchor.constraint(equalTo: newsAuthor.topAnchor, constant: -10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
 
             newsAuthor.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
+            newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
             newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
 
             newsDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 50),
+            newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 30),
             newsDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
             newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
         ]
+
 
         withoutImageConstraints = [
-            
             newsTitle.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             newsTitle.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20),
-            newsTitle.bottomAnchor.constraint(equalTo: newsText.topAnchor, constant: -10),
+            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            newsTitle.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
 
-            newsText.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 10),
+            newsText.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 20),
             newsText.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsText.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            newsText.bottomAnchor.constraint(equalTo: newsLink.topAnchor, constant: -10),
+            newsText.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
 
             newsLink.topAnchor.constraint(equalTo: newsText.bottomAnchor, constant: 10),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
-            newsLink.bottomAnchor.constraint(equalTo: newsAuthor.topAnchor, constant: -10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
 
             newsAuthor.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
+            newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
             newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
 
             newsDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 50),
+            newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 30),
             newsDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
             newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
         ]
 
-        withoutDescriptionConstraints = [
+        withoutDescriptionWithoutImage = [
             newsTitle.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             newsTitle.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20),
-            newsTitle.bottomAnchor.constraint(equalTo: newsText.topAnchor, constant: -10),
+            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            newsTitle.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
 
-            newsImage.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 10),
-            newsImage.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsImage.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -15),
-            newsImage.heightAnchor.constraint(equalToConstant: 150),
-
-            newsLink.topAnchor.constraint(equalTo: newsImage.bottomAnchor, constant: 10),
+            newsLink.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 15),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
-            newsLink.bottomAnchor.constraint(equalTo: newsAuthor.topAnchor, constant: -10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
 
             newsAuthor.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
+            newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
             newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
 
             newsDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 50),
+            newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 30),
+            newsDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
+            newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
+        ]
+
+        withImageWithoutDescr = [
+
+            newsTitle.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
+            newsTitle.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
+            newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            newsTitle.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
+
+            newsImage.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 120),
+            newsImage.heightAnchor.constraint(equalToConstant: 160),
+            newsImage.widthAnchor.constraint(equalToConstant: 180),
+            newsImage.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
+
+            newsLink.topAnchor.constraint(equalTo: newsImage.bottomAnchor, constant: 15),
+            newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
+
+            newsAuthor.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
+            newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
+            newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
+
+            newsDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
+            newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 30),
             newsDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
             newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
         ]

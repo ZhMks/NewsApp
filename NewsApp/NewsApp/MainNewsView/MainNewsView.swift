@@ -93,7 +93,7 @@ final class MainNewsView: UIView {
 extension MainNewsView: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        320
+        380
     }
 
     func numberOfSections(in tableView: UITableView) -> Int {
@@ -111,7 +111,7 @@ extension MainNewsView: UITableViewDataSource {
         let dataForCell = networkModel.fetchedResults[indexPath.row]
         guard let networkService = self.networkService else { return UITableViewCell() }
         guard let favouriteNews = self.favouriteNews else { return UITableViewCell() }
-        cell.updateCell(data: dataForCell, networkService: networkService, favouriteNews: favouriteNews)
+        cell.updateCell(with: dataForCell, networkService: networkService, favouriteNews: favouriteNews)
         cell.mainCellDelegate = self
         return cell
     }

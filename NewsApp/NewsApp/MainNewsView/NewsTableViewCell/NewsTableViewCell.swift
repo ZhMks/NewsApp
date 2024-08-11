@@ -108,60 +108,109 @@ final class MainNewsTableViewCell: UITableViewCell {
 
     // MARK: - Funcs
 
-    func updateCell(data: ResultedFetch, networkService: NetworkService, favouriteNews: [FavouriteNewsModel]) {
-
+    func updateCell(with data: ResultedFetch, networkService: NetworkService, favouriteNews: [FavouriteNewsModel]) {
         self.networkService = networkService
         self.data = data
+
         checkFavouriteNews(news: data, favouriteNews: favouriteNews)
 
-        titleLabel.text = data.title
-        shortDescriptionLabel.text = data.description
-        newsLink.text = data.link
-        creatorLabel.text = data.creator?.first
-        publicationDate.text = data.pubDate
-
-        if let imageURL = data.imageUrl, data.description == nil {
-            networkService.fetchImage(imageUrl: imageURL) { [weak self] result in
-                guard let self else { return }
-                switch result {
-                case .success(let fetchedImage):
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self else { return }
-                        self.shortImagePreview.image = fetchedImage
-                        self.shortImagePreview.isHidden = false
-                        self.shortDescriptionLabel.text = nil
-                        self.shortDescriptionLabel.isHidden = true
-                        NSLayoutConstraint.deactivate(withoutImageConstraints)
-                        NSLayoutConstraint.deactivate(withImageConstraints)
-                        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
-                        NSLayoutConstraint.activate(withImageWithoutDescr)
-                    }
-                case .failure(let failure):
-                    print(failure.localizedDescription)
-                    return
-                }
-            }
-        } else if data.imageUrl == nil, data.description == nil  {
-            self.shortImagePreview.image = nil
-            self.shortImagePreview.isHidden = true
-            self.shortDescriptionLabel.text = nil
-            self.shortDescriptionLabel.isHidden = true
-            NSLayoutConstraint.deactivate(withoutImageConstraints)
-            NSLayoutConstraint.deactivate(withImageConstraints)
-            NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
-            NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
-        } else {
-            shortImagePreview.image = nil
-            shortImagePreview.isHidden = true
-
-            NSLayoutConstraint.deactivate(withImageConstraints)
-            NSLayoutConstraint.activate(withoutImageConstraints)
-        }
+        configureLabels(with: data)
+        updateImageAndDescription(with: data)
 
         setNeedsUpdateConstraints()
         layoutIfNeeded()
     }
 
+    private func configureLabels(with data: ResultedFetch) {
+        titleLabel.text = data.title
+        newsLink.text = data.link
+        creatorLabel.text = data.creator?.first
+        publicationDate.text = data.pubDate
+    }
+
+    private func updateImageAndDescription(with data: ResultedFetch) {
+        print("First function with data: \(data.description), image: \(data.imageUrl)")
+        guard let imageUrl = data.imageUrl else {
+            handleNoImage(data: data)
+            return
+        }
+
+        networkService!.fetchImage(imageUrl: imageUrl) { [weak self] result in
+            guard let self = self else { return }
+
+            switch result {
+            case .success(let fetchedImage):
+                DispatchQueue.main.async {
+                    self.updateUIWithImage(fetchedImage, description: data.description)
+                }
+            case .failure(let error):
+                guard let brokenImage = UIImage(systemName: "photo.artframe") else { return }
+                DispatchQueue.main.async {
+                    self.updateUIWithImage(brokenImage, description: data.description)
+                }
+                print(error.localizedDescription)
+            }
+        }
+    }
+
+    private func handleNoImage(data: ResultedFetch) {
+        print("Data without data: \(data.description)")
+        if data.description == nil {
+            updateUIWithNoImageNoDescription()
+        } else {
+            updateUIWithNoImage(with: data.description)
+        }
+    }
+
+    private func updateUIWithImage(_ image: UIImage, description: String?) {
+        print("Data withImage data: \(description), image: \(image.description)")
+        shortImagePreview.image = image
+        shortImagePreview.isHidden = false
+        shortDescriptionLabel.text = description
+        shortDescriptionLabel.isHidden = false
+
+        NSLayoutConstraint.deactivate(withoutImageConstraints)
+        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
+        NSLayoutConstraint.deactivate(withImageConstraints)
+        NSLayoutConstraint.deactivate(withImageWithoutDescr)
+
+        if let description = description, !description.isEmpty {
+            NSLayoutConstraint.activate(withImageConstraints)
+        } else {
+            NSLayoutConstraint.activate(withImageWithoutDescr)
+        }
+    }
+
+
+    private func updateUIWithNoImageNoDescription() {
+        shortImagePreview.image = nil
+        shortImagePreview.isHidden = true
+        shortDescriptionLabel.text = nil
+        shortDescriptionLabel.isHidden = true
+
+        NSLayoutConstraint.deactivate(withoutImageConstraints)
+        NSLayoutConstraint.deactivate(withImageConstraints)
+        NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
+    }
+
+    private func updateUIWithNoImage(with description: String?) {
+        print("Description: \(description), Image Is NIL")
+        shortImagePreview.image = nil
+        shortImagePreview.isHidden = true
+        shortDescriptionLabel.text = description
+        shortDescriptionLabel.isHidden = false
+
+        NSLayoutConstraint.deactivate(withoutImageConstraints)
+        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
+        NSLayoutConstraint.deactivate(withImageConstraints)
+        NSLayoutConstraint.deactivate(withImageWithoutDescr)
+
+        if let description = description, !description.isEmpty {
+            NSLayoutConstraint.activate(withoutImageConstraints)
+        } else {
+            NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
+        }
+    }
 
     @objc private func saveIntoFavourites(_ sender: UIButton) {
         guard let data = self.data else { return }
@@ -206,7 +255,7 @@ final class MainNewsTableViewCell: UITableViewCell {
             favouritesButton.widthAnchor.constraint(equalToConstant: 24),
 
             shortImagePreview.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
-            shortImagePreview.heightAnchor.constraint(equalToConstant: 160),
+            shortImagePreview.heightAnchor.constraint(equalToConstant: 140),
             shortImagePreview.widthAnchor.constraint(equalToConstant: 180),
             shortImagePreview.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
 
@@ -304,7 +353,7 @@ final class MainNewsTableViewCell: UITableViewCell {
             favouritesButton.widthAnchor.constraint(equalToConstant: 24),
 
             shortImagePreview.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
-            shortImagePreview.heightAnchor.constraint(equalToConstant: 160),
+            shortImagePreview.heightAnchor.constraint(equalToConstant: 140),
             shortImagePreview.widthAnchor.constraint(equalToConstant: 180),
             shortImagePreview.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
 
