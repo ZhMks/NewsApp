@@ -92,6 +92,10 @@ final class MainNewsView: UIView {
 // MARK: -TableView DataSource
 extension MainNewsView: UITableViewDataSource {
 
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        320
+    }
+
     func numberOfSections(in tableView: UITableView) -> Int {
         guard let numberOfSections = dataSourceForTable?.count else { return 0 }
         return numberOfSections

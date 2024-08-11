@@ -31,13 +31,13 @@ enum NetworkErrors: String, Error {
 
 protocol NetworkService: AnyObject {
     var isPaginating: Bool { get }
-    func fetchNews(completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
+    func fetchNews(page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void)
     func fetchImage(imageUrl: String, completion: @escaping (Result<UIImage, NetworkErrors>) -> Void)
 }
 
 
 final class NetworkServiceClass: NetworkService {
-    
+
     // MARK: - Properties
     let apiKey = "pub_503541093ea10db129d8cd81cf0710f827413"
 
@@ -53,14 +53,20 @@ final class NetworkServiceClass: NetworkService {
 
 
     // MARK: - Funcs
-    
-    func fetchNews(completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
-        guard let url = URL(string: "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)") else { return }
-        let urlRequest = URLRequest(url: url)
+
+    func fetchNews(page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
+        var urlString = ""
         if isPaginating {
             isPaginating = true
         } else {
             isPaginating = true
+            if let page = page {
+                urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)&page=\(page)"
+            } else {
+                urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)"
+            }
+            guard let url = URL(string: urlString) else { return }
+            let urlRequest = URLRequest(url: url)
             URLSession.shared.dataTask(with: urlRequest)  { data, response, error in
                 if let _ = error {
                     self.isPaginating = false

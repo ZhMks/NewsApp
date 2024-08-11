@@ -56,7 +56,7 @@ class MainNewsViewController: UIViewController {
     }
 
     private func fetchNews() {
-        networkService.fetchNews() { [weak self] result in
+        networkService.fetchNews(page: nil) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let success):
@@ -91,15 +91,18 @@ extension MainNewsViewController: MainNewsVCDelegate {
     }
 
     func fetchMoreNews(page: String) {
+        print("Fetching page: \(page)")
         if networkService.isPaginating {
             mainView.addSpinningActivityIndicator()
         }
-        networkService.fetchNews() { [weak self] result in
+        networkService.fetchNews(page: page) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let success):
+                print("FetchedPage: \(success.nextPage)")
                 guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
-                self.mainView.updateDataForView(data: success,
+                self.fetchedNews = success
+                self.mainView.updateDataForView(data: self.fetchedNews!,
                                                 networkService: self.networkService,
                                                 favouritesNews: favouriteNews)
             case .failure(let failure):

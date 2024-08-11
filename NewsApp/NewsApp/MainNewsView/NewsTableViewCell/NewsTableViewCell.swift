@@ -22,6 +22,9 @@ final class MainNewsTableViewCell: UITableViewCell {
     weak var mainCellDelegate: MainNewsCellDelegate?
     private var withImageConstraints: [NSLayoutConstraint] = []
     private var withoutImageConstraints: [NSLayoutConstraint] = []
+    private var withoutDescriptionWithoutImage: [NSLayoutConstraint] = []
+    private var withImageWithoutDescr: [NSLayoutConstraint] = []
+
 
 
     private lazy var creatorLabel: UILabel = {
@@ -55,6 +58,7 @@ final class MainNewsTableViewCell: UITableViewCell {
         shortImagePreview.translatesAutoresizingMaskIntoConstraints = false
         shortImagePreview.layer.masksToBounds = true
         shortImagePreview.layer.cornerRadius = 6.0
+        shortImagePreview.contentMode = .scaleToFill
         return shortImagePreview
     }()
 
@@ -90,11 +94,11 @@ final class MainNewsTableViewCell: UITableViewCell {
         addSubviews()
         configureLayout()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         shortImagePreview.image = nil
@@ -116,7 +120,7 @@ final class MainNewsTableViewCell: UITableViewCell {
         creatorLabel.text = data.creator?.first
         publicationDate.text = data.pubDate
 
-        if let imageURL = data.imageUrl {
+        if let imageURL = data.imageUrl, data.description == nil {
             networkService.fetchImage(imageUrl: imageURL) { [weak self] result in
                 guard let self else { return }
                 switch result {
@@ -125,16 +129,27 @@ final class MainNewsTableViewCell: UITableViewCell {
                         guard let self else { return }
                         self.shortImagePreview.image = fetchedImage
                         self.shortImagePreview.isHidden = false
+                        self.shortDescriptionLabel.text = nil
+                        self.shortDescriptionLabel.isHidden = true
                         NSLayoutConstraint.deactivate(withoutImageConstraints)
-                        NSLayoutConstraint.activate(withImageConstraints)
-                        self.setNeedsLayout()
-                        self.layoutIfNeeded()
+                        NSLayoutConstraint.deactivate(withImageConstraints)
+                        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
+                        NSLayoutConstraint.activate(withImageWithoutDescr)
                     }
                 case .failure(let failure):
                     print(failure.localizedDescription)
                     return
                 }
             }
+        } else if data.imageUrl == nil, data.description == nil  {
+            self.shortImagePreview.image = nil
+            self.shortImagePreview.isHidden = true
+            self.shortDescriptionLabel.text = nil
+            self.shortDescriptionLabel.isHidden = true
+            NSLayoutConstraint.deactivate(withoutImageConstraints)
+            NSLayoutConstraint.deactivate(withImageConstraints)
+            NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
+            NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
         } else {
             shortImagePreview.image = nil
             shortImagePreview.isHidden = true
@@ -143,8 +158,8 @@ final class MainNewsTableViewCell: UITableViewCell {
             NSLayoutConstraint.activate(withoutImageConstraints)
         }
 
-        self.setNeedsLayout()
-        self.layoutIfNeeded()
+        setNeedsUpdateConstraints()
+        layoutIfNeeded()
     }
 
 
@@ -173,6 +188,7 @@ final class MainNewsTableViewCell: UITableViewCell {
         contentView.addSubview(newsLink)
         contentView.addSubview(creatorLabel)
         contentView.addSubview(publicationDate)
+        contentView.addSubview(favouritesButton)
     }
 
     private func configureLayout() {
@@ -181,67 +197,137 @@ final class MainNewsTableViewCell: UITableViewCell {
         withImageConstraints = [
             titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20),
-            titleLabel.bottomAnchor.constraint(equalTo: shortImagePreview.topAnchor, constant: -10),
+            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -50),
+            titleLabel.heightAnchor.constraint(equalToConstant: 80),
+
+            favouritesButton.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 25),
+            favouritesButton.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -15),
+            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
+            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
 
             shortImagePreview.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
-            shortImagePreview.heightAnchor.constraint(lessThanOrEqualToConstant: 140),
-            shortImagePreview.widthAnchor.constraint(equalToConstant: 250),
+            shortImagePreview.heightAnchor.constraint(equalToConstant: 160),
+            shortImagePreview.widthAnchor.constraint(equalToConstant: 180),
             shortImagePreview.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
 
             shortDescriptionLabel.topAnchor.constraint(equalTo: shortImagePreview.bottomAnchor, constant: 10),
             shortDescriptionLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             shortDescriptionLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            shortDescriptionLabel.bottomAnchor.constraint(equalTo: newsLink.topAnchor, constant: -10),
+            shortDescriptionLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
 
             newsLink.topAnchor.constraint(equalTo: shortDescriptionLabel.bottomAnchor, constant: 10),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
-            newsLink.bottomAnchor.constraint(equalTo: creatorLabel.topAnchor, constant: -10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
 
             creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
+            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
             creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
 
             publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 50),
+            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
             publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
             publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
         ]
 
+
         withoutImageConstraints = [
             titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -20),
-            titleLabel.bottomAnchor.constraint(equalTo: shortDescriptionLabel.topAnchor, constant: -10),
+            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            titleLabel.heightAnchor.constraint(equalToConstant: 80),
 
-            shortDescriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+            favouritesButton.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 25),
+            favouritesButton.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -15),
+            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
+            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
+
+            shortDescriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
             shortDescriptionLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             shortDescriptionLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            shortDescriptionLabel.bottomAnchor.constraint(equalTo: newsLink.topAnchor, constant: -10),
+            shortDescriptionLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
 
             newsLink.topAnchor.constraint(equalTo: shortDescriptionLabel.bottomAnchor, constant: 10),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
-            newsLink.bottomAnchor.constraint(equalTo: creatorLabel.topAnchor, constant: -10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
 
             creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -190),
+            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
             creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
 
             publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 50),
+            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
+            publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
+            publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
+        ]
+
+        withoutDescriptionWithoutImage = [
+            titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
+            titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
+            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            titleLabel.heightAnchor.constraint(equalToConstant: 80),
+
+            favouritesButton.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 25),
+            favouritesButton.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -15),
+            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
+            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
+
+            newsLink.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 15),
+            newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
+
+            creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
+            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
+            creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
+
+            publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
+            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
+            publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
+            publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
+        ]
+
+        withImageWithoutDescr = [
+
+            titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
+            titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
+            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
+            titleLabel.heightAnchor.constraint(equalToConstant: 80),
+
+            favouritesButton.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 25),
+            favouritesButton.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -15),
+            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
+            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
+
+            shortImagePreview.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 10),
+            shortImagePreview.heightAnchor.constraint(equalToConstant: 160),
+            shortImagePreview.widthAnchor.constraint(equalToConstant: 180),
+            shortImagePreview.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
+
+            newsLink.topAnchor.constraint(equalTo: shortImagePreview.bottomAnchor, constant: 15),
+            newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
+
+            creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
+            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
+            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
+            creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
+
+            publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
+            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
             publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
             publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
         ]
     }
 
-
 }
 
- extension String {
+extension String {
     static let mainNewsIdentifier = "MainNewsTableCell"
-     static let favouriteNewsIdentifier = "FavouriteNewsCell"
+    static let favouriteNewsIdentifier = "FavouriteNewsCell"
 }
