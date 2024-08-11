@@ -52,7 +52,6 @@ class FavouriteNewsViewController: UIViewController {
 
     func updateView() {
         guard let modelsArray = favouritesCoredataService.modelsArray else { return }
-        print(modelsArray.count)
         favouritesView.updateDataForView(data: modelsArray, networkService: self.networkService)
     }
 

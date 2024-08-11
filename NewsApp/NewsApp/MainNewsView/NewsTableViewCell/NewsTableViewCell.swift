@@ -157,7 +157,7 @@ final class MainNewsTableViewCell: UITableViewCell {
     }
 
     private func handleNoImage(data: ResultedFetch) {
-        print("Data without data: \(data.description)")
+
         if data.description == nil {
             updateUIWithNoImageNoDescription()
         } else {
@@ -166,7 +166,7 @@ final class MainNewsTableViewCell: UITableViewCell {
     }
 
     private func updateUIWithImage(_ image: UIImage, description: String?) {
-        print("Data withImage data: \(description), image: \(image.description)")
+
         shortImagePreview.image = image
         shortImagePreview.isHidden = false
         shortDescriptionLabel.text = description
@@ -197,7 +197,7 @@ final class MainNewsTableViewCell: UITableViewCell {
     }
 
     private func updateUIWithNoImage(with description: String?) {
-        print("Description: \(description), Image Is NIL")
+        
         shortImagePreview.image = nil
         shortImagePreview.isHidden = true
         shortDescriptionLabel.text = description

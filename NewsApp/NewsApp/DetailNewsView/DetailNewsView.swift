@@ -88,7 +88,7 @@ final class DetailNewsView: UIView {
 
     func updateViewData(data: ResultedFetch, networkService: NetworkService?) {
         self.networkService = networkService
-        print("DATA FOR VIEW: \(data.description), title: \(data.title), image: \(data.imageUrl)")
+        
         configureLabels(with: data)
         updateImageAndDescription(with: data)
 

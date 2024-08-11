@@ -76,7 +76,6 @@ extension FavouriteNewsView: UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         guard let number = favouriteNews?.count else { return 0 }
-        print("Number of rows: \(number)")
         return number
     }
     
