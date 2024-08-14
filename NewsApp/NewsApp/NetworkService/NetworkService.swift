@@ -57,60 +57,64 @@ final class NetworkServiceClass: NetworkService {
     func fetchNews(page: String?, completion: @escaping (Result<NetworkModel, NetworkErrors>) -> Void) {
         var urlString = ""
         if isPaginating {
+            print("IS PAGINATING: \(isPaginating)")
+            return
+        }
+        if let page = page {
             isPaginating = true
+            urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)&page=\(page)"
         } else {
-            isPaginating = true
-            if let page = page {
-                urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)&page=\(page)"
-            } else {
-                urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)"
+            urlString = "https://newsdata.io/api/1/latest?apikey=\(apiKey)&language=\(language)"
+        }
+        guard let url = URL(string: urlString) else { return }
+
+        let urlRequest = URLRequest(url: url)
+
+        URLSession.shared.dataTask(with: urlRequest)  { data, response, error in
+            if let _ = error {
+                self.isPaginating = false
+                completion(.failure(.accessError))
             }
-            guard let url = URL(string: urlString) else { return }
-            let urlRequest = URLRequest(url: url)
-            URLSession.shared.dataTask(with: urlRequest)  { data, response, error in
-                if let _ = error {
+
+            if let response = response as? HTTPURLResponse {
+                switch response.statusCode {
+                case 403:
                     self.isPaginating = false
                     completion(.failure(.accessError))
-                }
-
-                if let response = response as? HTTPURLResponse {
-                    switch response.statusCode {
-                    case 403:
-                        self.isPaginating = false
-                        completion(.failure(.accessError))
-                    case 404:
-                        self.isPaginating = false
-                        completion(.failure(.pageNotFound))
-                    case 500:
-                        self.isPaginating = false
-                        completion(.failure(.serverError))
-                    case 200:
-                        if let data = data {
-                            let decoder = DecoderServiceClass()
-                            decoder.decodeData(data: data) { [weak self] result in
-                                switch result {
-                                case .success(let success):
-                                    self?.isPaginating = false
-                                    completion(.success(success))
-                                case .failure(let failure):
-                                    print(failure.localizedDescription)
-                                    self?.isPaginating = false
-                                    completion(.failure(.unknownError))
-                                }
+                case 404:
+                    self.isPaginating = false
+                    completion(.failure(.pageNotFound))
+                case 500:
+                    self.isPaginating = false
+                    completion(.failure(.serverError))
+                case 200:
+                    if let data = data {
+                        let decoder = DecoderServiceClass()
+                        decoder.decodeData(data: data) { [weak self] result in
+                            switch result {
+                            case .success(let success):
+                                self?.isPaginating = false
+                                completion(.success(success))
+                            case .failure(let failure):
+                                print(failure.localizedDescription)
+                                self?.isPaginating = false
+                                completion(.failure(.unknownError))
                             }
                         }
-                    default:
-                        self.isPaginating = false
-                        completion(.failure(.unknownError))
                     }
+                default:
+                    self.isPaginating = false
+                    completion(.failure(.unknownError))
                 }
-            }.resume()
-        }
+            }
+        }.resume()
     }
 
     func fetchImage(imageUrl: String, completion: @escaping (Result<UIImage, NetworkErrors>) -> Void) {
         guard let url = URL(string: imageUrl) else { return }
         let urlRequest = URLRequest(url: url)
+
+        print("ImageURL: \(imageUrl)")
 
         URLSession.shared.dataTask(with: urlRequest) { data, response, error in
             if let _ = error {

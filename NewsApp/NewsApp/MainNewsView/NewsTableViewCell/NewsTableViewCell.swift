@@ -6,10 +6,12 @@
 //
 
 import UIKit
+import Kingfisher
+
 
 protocol MainNewsCellDelegate: AnyObject {
-    func saveIntoFavourites(data: ResultedFetch)
-    func removeModelFromCoredata(data: ResultedFetch)
+    func saveIntoFavourites(data: ResultedFetchResponse)
+    func removeModelFromCoredata(data: ResultedFetchResponse)
 }
 
 
@@ -17,12 +19,9 @@ final class MainNewsTableViewCell: UITableViewCell {
     // MARK: - Properties
 
     static let identifier = String.mainNewsIdentifier
-    var networkService: NetworkService?
-    var data: ResultedFetch?
+    var data: ResultedFetchResponse?
     weak var mainCellDelegate: MainNewsCellDelegate?
     private var withImageConstraints: [NSLayoutConstraint] = []
-    private var withoutImageConstraints: [NSLayoutConstraint] = []
-    private var withoutDescriptionWithoutImage: [NSLayoutConstraint] = []
     private var withImageWithoutDescr: [NSLayoutConstraint] = []
 
 
@@ -101,119 +100,57 @@ final class MainNewsTableViewCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        shortImagePreview.image = nil
-        favouritesButton.setBackgroundImage(UIImage(systemName: "star"), for: .normal)
+        prepareCellForReuse()
     }
 
 
     // MARK: - Funcs
 
-    func updateCell(with data: ResultedFetch, networkService: NetworkService, favouriteNews: [FavouriteNewsModel]) {
-        self.networkService = networkService
+    func updateCell(with data: ResultedFetchResponse, favouriteNews: [FavouriteNewsModel]) {
         self.data = data
 
         checkFavouriteNews(news: data, favouriteNews: favouriteNews)
 
         configureLabels(with: data)
-        updateImageAndDescription(with: data)
 
-        setNeedsUpdateConstraints()
+        if let imageUrl = data.imageURL, let requestURL = URL(string: imageUrl) {
+            shortImagePreview.kf.setImage(with: requestURL, placeholder: UIImage(systemName: "photo.artframe")) { [weak self] result in
+                switch result {
+                case .success(let retrivedImage):
+                    self?.shortImagePreview.image = retrivedImage.image
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        } else {
+            shortImagePreview.image = UIImage(systemName: "photo.artframe")
+        }
+
+        if data.description == nil {
+            shortDescriptionLabel.text = nil
+            shortDescriptionLabel.isHidden = true
+
+            NSLayoutConstraint.deactivate(withImageConstraints)
+            NSLayoutConstraint.activate(withImageWithoutDescr)
+        } else {
+            shortDescriptionLabel.isHidden = false
+            shortDescriptionLabel.text = data.description
+            NSLayoutConstraint.deactivate(withImageWithoutDescr)
+            NSLayoutConstraint.activate(withImageConstraints)
+        }
+
+        needsUpdateConstraints()
         layoutIfNeeded()
+        setNeedsLayout()
     }
 
-    private func configureLabels(with data: ResultedFetch) {
+    private func configureLabels(with data: ResultedFetchResponse) {
         titleLabel.text = data.title
         newsLink.text = data.link
         creatorLabel.text = data.creator?.first
         publicationDate.text = data.pubDate
     }
 
-    private func updateImageAndDescription(with data: ResultedFetch) {
-        
-        guard let brokenImage = UIImage(systemName: "photo.artframe") else { return }
-        updateUIWithImage(brokenImage, description: data.description)
-
-        guard let imageUrl = data.imageUrl else {
-            handleNoImage(data: data)
-            return
-        }
-
-        networkService!.fetchImage(imageUrl: imageUrl) { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let fetchedImage):
-                DispatchQueue.main.async {
-                    self.updateUIWithImage(fetchedImage, description: data.description)
-                }
-            case .failure(let error):
-                guard let brokenImage = UIImage(systemName: "photo.artframe") else { return }
-                DispatchQueue.main.async {
-                    self.updateUIWithImage(brokenImage, description: data.description)
-                }
-                print(error.localizedDescription)
-            }
-        }
-    }
-
-    private func handleNoImage(data: ResultedFetch) {
-
-        if data.description == nil {
-            updateUIWithNoImageNoDescription()
-        } else {
-            updateUIWithNoImage(with: data.description)
-        }
-    }
-
-    private func updateUIWithImage(_ image: UIImage, description: String?) {
-
-        shortImagePreview.image = image
-        shortImagePreview.isHidden = false
-        shortDescriptionLabel.text = description
-        shortDescriptionLabel.isHidden = false
-
-        NSLayoutConstraint.deactivate(withoutImageConstraints)
-        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
-        NSLayoutConstraint.deactivate(withImageConstraints)
-        NSLayoutConstraint.deactivate(withImageWithoutDescr)
-
-        if let description = description, !description.isEmpty {
-            NSLayoutConstraint.activate(withImageConstraints)
-        } else {
-            NSLayoutConstraint.activate(withImageWithoutDescr)
-        }
-    }
-
-
-    private func updateUIWithNoImageNoDescription() {
-        shortImagePreview.image = nil
-        shortImagePreview.isHidden = true
-        shortDescriptionLabel.text = nil
-        shortDescriptionLabel.isHidden = true
-
-        NSLayoutConstraint.deactivate(withoutImageConstraints)
-        NSLayoutConstraint.deactivate(withImageConstraints)
-        NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
-    }
-
-    private func updateUIWithNoImage(with description: String?) {
-        
-        shortImagePreview.image = nil
-        shortImagePreview.isHidden = true
-        shortDescriptionLabel.text = description
-        shortDescriptionLabel.isHidden = false
-
-        NSLayoutConstraint.deactivate(withoutImageConstraints)
-        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
-        NSLayoutConstraint.deactivate(withImageConstraints)
-        NSLayoutConstraint.deactivate(withImageWithoutDescr)
-
-        if let description = description, !description.isEmpty {
-            NSLayoutConstraint.activate(withoutImageConstraints)
-        } else {
-            NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
-        }
-    }
 
     @objc private func saveIntoFavourites(_ sender: UIButton) {
         guard let data = self.data else { return }
@@ -227,7 +164,7 @@ final class MainNewsTableViewCell: UITableViewCell {
         }
     }
 
-    private func checkFavouriteNews(news: ResultedFetch, favouriteNews: [FavouriteNewsModel]) {
+    private func checkFavouriteNews(news: ResultedFetchResponse, favouriteNews: [FavouriteNewsModel]) {
         if favouriteNews.contains(where: { $0.title == news.title }) {
             favouritesButton.setBackgroundImage(UIImage(systemName: "star.fill"), for: .normal)
         }
@@ -283,66 +220,6 @@ final class MainNewsTableViewCell: UITableViewCell {
             publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
         ]
 
-
-        withoutImageConstraints = [
-            titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
-            titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
-            titleLabel.heightAnchor.constraint(equalToConstant: 80),
-
-            favouritesButton.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 25),
-            favouritesButton.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -15),
-            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
-            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
-
-            shortDescriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
-            shortDescriptionLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            shortDescriptionLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            shortDescriptionLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
-
-            newsLink.topAnchor.constraint(equalTo: shortDescriptionLabel.bottomAnchor, constant: 10),
-            newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
-            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
-
-            creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
-            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
-            creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
-
-            publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
-            publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
-            publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
-        ]
-
-        withoutDescriptionWithoutImage = [
-            titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
-            titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
-            titleLabel.heightAnchor.constraint(equalToConstant: 80),
-
-            favouritesButton.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 25),
-            favouritesButton.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -15),
-            favouritesButton.heightAnchor.constraint(equalToConstant: 24),
-            favouritesButton.widthAnchor.constraint(equalToConstant: 24),
-
-            newsLink.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 15),
-            newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
-            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
-
-            creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
-            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
-            creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
-
-            publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
-            publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
-            publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
-        ]
-
         withImageWithoutDescr = [
 
             titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
@@ -377,6 +254,14 @@ final class MainNewsTableViewCell: UITableViewCell {
         ]
     }
 
+    private func prepareCellForReuse() {
+        shortImagePreview.image = nil
+        favouritesButton.setBackgroundImage(UIImage(systemName: "star"), for: .normal)
+        titleLabel.text = nil
+        newsLink.text = nil
+        creatorLabel.text = nil
+        publicationDate.text = nil
+    }
 }
 
 extension String {

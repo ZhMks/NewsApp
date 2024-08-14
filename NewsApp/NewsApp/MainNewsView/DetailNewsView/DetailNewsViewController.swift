@@ -14,15 +14,13 @@ final class DetailNewsViewController: UIViewController {
 
     // MARK: - Properties
     let detailNewsView: DetailNewsView
-    let fetchedResult: ResultedFetch
-    let networkService: NetworkService
+    let fetchedResult: ResultedFetchResponse
     let favouritesService: FavouriteModelService
 
     // MARK: - Lifecycle
-    init(detailNewsView: DetailNewsView, fetchedResult: ResultedFetch, networkService: NetworkService, favouritesService: FavouriteModelService) {
+    init(detailNewsView: DetailNewsView, fetchedResult: ResultedFetchResponse, favouritesService: FavouriteModelService) {
         self.detailNewsView = detailNewsView
         self.fetchedResult = fetchedResult
-        self.networkService = networkService
         self.favouritesService = favouritesService
         super.init(nibName: nil, bundle: nil)
     }
@@ -47,7 +45,7 @@ final class DetailNewsViewController: UIViewController {
     // MARK: - Funcs
 
     private func updateViewData() {
-        detailNewsView.updateViewData(data: self.fetchedResult, networkService: self.networkService)
+        detailNewsView.updateViewData(data: self.fetchedResult)
     }
 
     private func setupNavigationBar() {
@@ -56,22 +54,29 @@ final class DetailNewsViewController: UIViewController {
                                           target: self,
                                           action: #selector(rightButtonTouched(_:)))
 
+        setupButtonTitle(rightButton)
+        navigationItem.rightBarButtonItem = rightButton
+    }
+
+    private func setupButtonTitle(_ button: UIBarButtonItem) {
         if let favouriteNewsModels = self.favouritesService.modelsArray, !favouriteNewsModels.isEmpty {
             if favouriteNewsModels.contains(where: { $0.title! == fetchedResult.title }) {
-                rightButton.title = "Удалить из избранного"
+                button.title = "Удалить из избранного"
+            } else {
+                button.title = "Добавить в избранное"
             }
         }
-        navigationItem.rightBarButtonItem = rightButton
     }
 
     @objc private func rightButtonTouched(_ sender: UIBarButtonItem) {
 
         if sender.title == "Добавить в избранное" {
             favouritesService.saveToFavouriteModel(model: fetchedResult)
+            sender.title = "Удалить из избранного"
         } else {
             favouritesService.remove(fetchedModel: fetchedResult, savedModel: nil)
+            sender.title = "Добавить в избранное"
         }
-
         NotificationCenter.default.post(name: NSNotification.Name(.buttonTouched), object: nil)
     }
 

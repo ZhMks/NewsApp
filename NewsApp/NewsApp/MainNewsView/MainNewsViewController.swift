@@ -9,24 +9,24 @@ import UIKit
 
 protocol MainNewsVCDelegate: AnyObject {
     func fetchMoreNews(page: String)
-    func goToDetailNews(model: ResultedFetch)
-    func saveIntoFavourites(data: ResultedFetch)
-    func removeModelFromCoredata(data: ResultedFetch)
+    func goToDetailNews(model: ResultedFetchResponse)
+    func saveIntoFavourites(data: ResultedFetchResponse)
+    func removeModelFromCoredata(data: ResultedFetchResponse)
 }
 
 class MainNewsViewController: UIViewController {
 
     // MARK: - Properties
     private let mainView: MainNewsView
-    private let networkService: NetworkService
+    private let dataSourceService: DataSourceService
     private let favouritesCoredataService: FavouriteModelService
-    private var fetchedNews: NetworkModel?
+    private var fetchedNews: [MainNewsResponse] = []
 
     // MARK: - LifeCycle
 
-    init(mainView: MainNewsView, networkService: NetworkService, favouritesCoredataService: FavouriteModelService) {
+    init(mainView: MainNewsView, dataSourceService: DataSourceService, favouritesCoredataService: FavouriteModelService) {
         self.mainView = mainView
-        self.networkService = networkService
+        self.dataSourceService = dataSourceService
         self.favouritesCoredataService = favouritesCoredataService
         super.init(nibName: nil, bundle: nil)
     }
@@ -56,18 +56,15 @@ class MainNewsViewController: UIViewController {
     }
 
     private func fetchNews() {
-        networkService.fetchNews(page: nil) { [weak self] result in
-            guard let self else { return }
+        dataSourceService.fetchNews(page: nil) { [weak self] result in
             switch result {
-            case .success(let success):
-                self.fetchedNews = success
-                guard let fetchedNews = self.fetchedNews else { return }
-                guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
-                self.mainView.updateDataForView(data: fetchedNews,
-                                                networkService: self.networkService,
-                                                favouritesNews: favouriteNews)
+            case .success(let fetchedNews):
+                self?.fetchedNews = fetchedNews
+                guard let favouriteNews = self?.favouritesCoredataService.modelsArray else { return }
+                self?.mainView.updateDataForView(data: (self?.fetchedNews)!, favouritesNews: favouriteNews)
             case .failure(let failure):
                 print(failure.localizedDescription)
+                return
             }
         }
     }
@@ -81,41 +78,37 @@ class MainNewsViewController: UIViewController {
 
 extension MainNewsViewController: MainNewsVCDelegate {
 
-    func removeModelFromCoredata(data: ResultedFetch) {
+    func removeModelFromCoredata(data: ResultedFetchResponse) {
         favouritesCoredataService.remove(fetchedModel: data, savedModel: nil)
     }
 
 
-    func saveIntoFavourites(data: ResultedFetch) {
+    func saveIntoFavourites(data: ResultedFetchResponse) {
         favouritesCoredataService.saveToFavouriteModel(model: data)
     }
 
     func fetchMoreNews(page: String) {
-        print("Fetching page: \(page)")
-        if networkService.isPaginating {
+        if dataSourceService.networkService.isPaginating {
             mainView.addSpinningActivityIndicator()
         }
-        networkService.fetchNews(page: page) { [weak self] result in
+        dataSourceService.fetchNews(page: page) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let success):
-                print("FetchedPage: \(success.nextPage)")
                 guard let favouriteNews = self.favouritesCoredataService.modelsArray else { return }
                 self.fetchedNews = success
-                self.mainView.updateDataForView(data: self.fetchedNews!,
-                                                networkService: self.networkService,
-                                                favouritesNews: favouriteNews)
+                self.mainView.updateDataForView(data: self.fetchedNews, favouritesNews: favouriteNews)
             case .failure(let failure):
                 print(failure.localizedDescription)
             }
         }
     }
 
-    func goToDetailNews(model: ResultedFetch) {
+    func goToDetailNews(model: ResultedFetchResponse) {
 
         let detailNewsView = DetailNewsView(frame: .zero)
 
-        let detailNewsViewController = DetailNewsViewController(detailNewsView: detailNewsView, fetchedResult: model, networkService: self.networkService, favouritesService: self.favouritesCoredataService)
+        let detailNewsViewController = DetailNewsViewController(detailNewsView: detailNewsView, fetchedResult: model, favouritesService: self.favouritesCoredataService)
         navigationController?.pushViewController(detailNewsViewController, animated: true)
     }
 }

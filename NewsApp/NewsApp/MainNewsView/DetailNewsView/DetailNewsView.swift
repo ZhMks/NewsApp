@@ -1,17 +1,17 @@
 //
-//  DetailFavouriteView.swift
+//  DetailNewsView.swift
 //  NewsApp
 //
-//  Created by Максим Жуин on 11.08.2024.
+//  Created by Максим Жуин on 09.08.2024.
 //
 
 import UIKit
+import Kingfisher
 
-final class DetailFavouriteView: UIView {
+final class DetailNewsView: UIView {
 
     // MARK: - Properties
-    weak var detailFavouriteDelegate: DetailFavouriteDelegate?
-    var networkService: NetworkService?
+    weak var detailNewsVCDelegate: DetailNewsVCDelegate?
 
     private var withImageConstraints: [NSLayoutConstraint] = []
     private var withImageWithoutDescr: [NSLayoutConstraint] = []
@@ -76,20 +76,19 @@ final class DetailFavouriteView: UIView {
         addSubviews()
         configureLayout()
     }
-
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-
+    
 
     // MARK: - Funcs
 
-    func updateViewData(data: FavouriteNewsModel, networkService: NetworkService?) {
-        self.networkService = networkService
+    func updateViewData(data: ResultedFetchResponse) {
 
         configureLabels(with: data)
-
-        if let imageUrl = data.image, let requestURL = URL(string: imageUrl) {
+        
+        if let imageUrl = data.imageURL, let requestURL = URL(string: imageUrl) {
             newsImage.kf.setImage(with: requestURL, placeholder: UIImage(systemName: "photo.artframe")) { [weak self] result in
                 switch result {
                 case .success(let retrivedImage):
@@ -102,24 +101,27 @@ final class DetailFavouriteView: UIView {
             newsImage.image = UIImage(systemName: "photo.artframe")
         }
 
-        if data.description.isEmpty {
+        if data.description == nil {
             newsText.text = nil
             newsText.isHidden = true
 
             NSLayoutConstraint.deactivate(withImageConstraints)
             NSLayoutConstraint.activate(withImageWithoutDescr)
         } else {
-            newsText.isHidden = false
-            newsText.text = data.newsText
+            newsText.text = data.description
             NSLayoutConstraint.deactivate(withImageWithoutDescr)
             NSLayoutConstraint.activate(withImageConstraints)
         }
+
+        setNeedsUpdateConstraints()
+        layoutIfNeeded()
+        setNeedsLayout()
     }
 
-    private func configureLabels(with data: FavouriteNewsModel) {
+    private func configureLabels(with data: ResultedFetchResponse) {
         newsTitle.text = data.title
         newsLink.text = data.link
-        newsAuthor.text = data.author
+        newsAuthor.text = data.creator?.first
         newsDate.text = data.pubDate
     }
 
@@ -140,9 +142,9 @@ final class DetailFavouriteView: UIView {
             newsTitle.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             newsTitle.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -50),
-            newsTitle.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
+            newsTitle.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -630),
 
-            newsImage.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 120),
+            newsImage.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 30),
             newsImage.heightAnchor.constraint(equalToConstant: 160),
             newsImage.widthAnchor.constraint(equalToConstant: 180),
             newsImage.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
@@ -150,22 +152,22 @@ final class DetailFavouriteView: UIView {
             newsText.topAnchor.constraint(equalTo: newsImage.bottomAnchor, constant: 10),
             newsText.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsText.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            newsText.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
+            newsText.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -140),
 
             newsLink.topAnchor.constraint(equalTo: newsText.bottomAnchor, constant: 10),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
-            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -60),
 
             newsAuthor.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
             newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
             newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
-            newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
+            newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -40),
 
             newsDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
             newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 30),
             newsDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
-            newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
+            newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -40)
         ]
 
         withImageWithoutDescr = [
@@ -173,29 +175,36 @@ final class DetailFavouriteView: UIView {
             newsTitle.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
             newsTitle.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsTitle.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
-            newsTitle.heightAnchor.constraint(greaterThanOrEqualToConstant: 80),
+            newsTitle.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -630),
 
-            newsImage.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 120),
+            newsImage.topAnchor.constraint(equalTo: newsTitle.bottomAnchor, constant: 30),
             newsImage.heightAnchor.constraint(equalToConstant: 160),
             newsImage.widthAnchor.constraint(equalToConstant: 180),
             newsImage.centerXAnchor.constraint(equalTo: safeArea.centerXAnchor),
 
-            newsLink.topAnchor.constraint(equalTo: newsImage.bottomAnchor, constant: 15),
+            newsLink.topAnchor.constraint(equalTo: newsText.bottomAnchor, constant: 10),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
-            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
+            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
+            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -60),
 
             newsAuthor.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
             newsAuthor.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
             newsAuthor.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
-            newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
+            newsAuthor.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -40),
 
             newsDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
             newsDate.leadingAnchor.constraint(equalTo: newsAuthor.trailingAnchor, constant: 30),
             newsDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
-            newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
+            newsDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -40)
         ]
     }
 
 }
 
+ extension String {
+
+    var underLined: NSAttributedString {
+        NSMutableAttributedString(string: self, attributes: [.underlineStyle: NSUnderlineStyle.single.rawValue])
+    }
+
+}

@@ -16,8 +16,6 @@ final class FavouriteNewsCell: UITableViewCell {
     var networkService: NetworkService?
     var data: FavouriteNewsModel?
     private var withImageConstraints: [NSLayoutConstraint] = []
-    private var withoutImageConstraints: [NSLayoutConstraint] = []
-    private var withoutDescriptionWithoutImage: [NSLayoutConstraint] = []
     private var withImageWithoutDescr: [NSLayoutConstraint] = []
 
 
@@ -93,14 +91,40 @@ final class FavouriteNewsCell: UITableViewCell {
     // MARK: - Funcs
 
     func updateCell(with data: FavouriteNewsModel, networkService: NetworkService) {
+
         self.networkService = networkService
         self.data = data
 
         configureLabels(with: data)
-        updateImageAndDescription(with: data)
+
+        if let imageUrl = data.image, let requestURL = URL(string: imageUrl) {
+            shortImagePreview.kf.setImage(with: requestURL, placeholder: UIImage(systemName: "photo.artframe")) { [weak self] result in
+                switch result {
+                case .success(let retrivedImage):
+                    self?.shortImagePreview.image = retrivedImage.image
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+        } else {
+            shortImagePreview.image = UIImage(systemName: "photo.artframe")
+        }
+
+        if data.description.isEmpty {
+            shortDescriptionLabel.text = nil
+            shortDescriptionLabel.isHidden = true
+
+            NSLayoutConstraint.deactivate(withImageConstraints)
+            NSLayoutConstraint.activate(withImageWithoutDescr)
+        } else {
+            shortDescriptionLabel.isHidden = false
+            shortDescriptionLabel.text = data.newsText
+            NSLayoutConstraint.deactivate(withImageWithoutDescr)
+            NSLayoutConstraint.activate(withImageConstraints)
+        }
 
         setNeedsUpdateConstraints()
-        layoutIfNeeded()
+        setNeedsLayout()
     }
 
     private func configureLabels(with data: FavouriteNewsModel) {
@@ -108,93 +132,6 @@ final class FavouriteNewsCell: UITableViewCell {
         newsLink.text = data.link
         creatorLabel.text = data.author
         publicationDate.text = data.pubDate
-    }
-
-    private func updateImageAndDescription(with data: FavouriteNewsModel) {
-
-        guard let brokenImage = UIImage(systemName: "photo.artframe") else { return }
-        updateUIWithImage(brokenImage, description: data.description)
-
-        guard let imageUrl = data.imageURL else {
-            handleNoImage(data: data)
-            return
-        }
-
-        networkService!.fetchImage(imageUrl: imageUrl) { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let fetchedImage):
-                DispatchQueue.main.async {
-                    self.updateUIWithImage(fetchedImage, description: data.newsText)
-                }
-            case .failure(let error):
-                guard let brokenImage = UIImage(systemName: "photo.artframe") else { return }
-                DispatchQueue.main.async {
-                    self.updateUIWithImage(brokenImage, description: data.newsText)
-                }
-                print(error.localizedDescription)
-            }
-        }
-    }
-
-    private func handleNoImage(data: FavouriteNewsModel) {
-
-        if data.newsText == nil {
-            updateUIWithNoImageNoDescription()
-        } else {
-            updateUIWithNoImage(with: data.newsText)
-        }
-    }
-
-    private func updateUIWithImage(_ image: UIImage, description: String?) {
-
-        shortImagePreview.image = image
-        shortImagePreview.isHidden = false
-        shortDescriptionLabel.text = description
-        shortDescriptionLabel.isHidden = false
-
-        NSLayoutConstraint.deactivate(withoutImageConstraints)
-        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
-        NSLayoutConstraint.deactivate(withImageConstraints)
-        NSLayoutConstraint.deactivate(withImageWithoutDescr)
-
-        if let description = description, !description.isEmpty {
-            NSLayoutConstraint.activate(withImageConstraints)
-        } else {
-            NSLayoutConstraint.activate(withImageWithoutDescr)
-        }
-    }
-
-
-    private func updateUIWithNoImageNoDescription() {
-        shortImagePreview.image = nil
-        shortImagePreview.isHidden = true
-        shortDescriptionLabel.text = nil
-        shortDescriptionLabel.isHidden = true
-
-        NSLayoutConstraint.deactivate(withoutImageConstraints)
-        NSLayoutConstraint.deactivate(withImageConstraints)
-        NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
-    }
-
-    private func updateUIWithNoImage(with description: String?) {
-
-        shortImagePreview.image = nil
-        shortImagePreview.isHidden = true
-        shortDescriptionLabel.text = description
-        shortDescriptionLabel.isHidden = false
-
-        NSLayoutConstraint.deactivate(withoutImageConstraints)
-        NSLayoutConstraint.deactivate(withoutDescriptionWithoutImage)
-        NSLayoutConstraint.deactivate(withImageConstraints)
-        NSLayoutConstraint.deactivate(withImageWithoutDescr)
-
-        if let description = description, !description.isEmpty {
-            NSLayoutConstraint.activate(withoutImageConstraints)
-        } else {
-            NSLayoutConstraint.activate(withoutDescriptionWithoutImage)
-        }
     }
 
     private func addSubviews() {
@@ -226,56 +163,6 @@ final class FavouriteNewsCell: UITableViewCell {
             shortDescriptionLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
 
             newsLink.topAnchor.constraint(equalTo: shortDescriptionLabel.bottomAnchor, constant: 10),
-            newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
-            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
-
-            creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
-            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
-            creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
-
-            publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
-            publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
-            publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
-        ]
-
-
-        withoutImageConstraints = [
-            titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
-            titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
-            titleLabel.heightAnchor.constraint(equalToConstant: 80),
-
-            shortDescriptionLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
-            shortDescriptionLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            shortDescriptionLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -10),
-            shortDescriptionLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -80),
-
-            newsLink.topAnchor.constraint(equalTo: shortDescriptionLabel.bottomAnchor, constant: 10),
-            newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
-            newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),
-
-            creatorLabel.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            creatorLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 15),
-            creatorLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -180),
-            creatorLabel.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10),
-
-            publicationDate.topAnchor.constraint(equalTo: newsLink.bottomAnchor, constant: 10),
-            publicationDate.leadingAnchor.constraint(equalTo: creatorLabel.trailingAnchor, constant: 30),
-            publicationDate.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -5),
-            publicationDate.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -10)
-        ]
-
-        withoutDescriptionWithoutImage = [
-            titleLabel.topAnchor.constraint(equalTo: safeArea.topAnchor, constant: 10),
-            titleLabel.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
-            titleLabel.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -30),
-            titleLabel.heightAnchor.constraint(equalToConstant: 80),
-
-            newsLink.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 15),
             newsLink.leadingAnchor.constraint(equalTo: safeArea.leadingAnchor, constant: 10),
             newsLink.trailingAnchor.constraint(equalTo: safeArea.trailingAnchor, constant: -130),
             newsLink.bottomAnchor.constraint(equalTo: safeArea.bottomAnchor, constant: -30),

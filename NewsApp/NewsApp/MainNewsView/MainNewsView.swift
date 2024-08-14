@@ -11,11 +11,10 @@ import UIKit
 
 final class MainNewsView: UIView {
     // MARK: - Properties
-   private var dataSourceForTable: [NetworkModel]? = []
+   private var dataSourceForTable: [MainNewsResponse]? = []
 
    weak var mainNewsVCDelegate: MainNewsVCDelegate?
 
-    var networkService: NetworkService?
     private var favouriteNews: [FavouriteNewsModel]?
 
     private lazy var newsTableView: UITableView = {
@@ -41,12 +40,10 @@ final class MainNewsView: UIView {
     
     // MARK: - Funcs
 
-    func updateDataForView(data: NetworkModel, networkService: NetworkService, favouritesNews: [FavouriteNewsModel]) {
-        self.networkService = networkService
-        self.favouriteNews = favouritesNews
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            self.dataSourceForTable?.append(data)
+    func updateDataForView(data: [MainNewsResponse], favouritesNews: [FavouriteNewsModel]) {
+        DispatchQueue.main.async {
+            self.favouriteNews = favouritesNews
+            self.dataSourceForTable? = data
             self.newsTableView.reloadData()
         }
     }
@@ -92,26 +89,27 @@ final class MainNewsView: UIView {
 // MARK: -TableView DataSource
 extension MainNewsView: UITableViewDataSource {
 
+
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         380
     }
+
 
     func numberOfSections(in tableView: UITableView) -> Int {
         guard let numberOfSections = dataSourceForTable?.count else { return 0 }
         return numberOfSections
     }
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let numberOfRows = dataSourceForTable?[section].fetchedResults.count else { return 10 }
+        guard let numberOfRows = dataSourceForTable?[section].resultedFetch.count else { return 10 }
         return numberOfRows
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: MainNewsTableViewCell.identifier, for: indexPath) as? MainNewsTableViewCell else { return UITableViewCell() }
         guard let networkModel = dataSourceForTable?[indexPath.section] else { return UITableViewCell() }
-        let dataForCell = networkModel.fetchedResults[indexPath.row]
-        guard let networkService = self.networkService else { return UITableViewCell() }
+        var dataForCell = networkModel.resultedFetch[indexPath.row]
         guard let favouriteNews = self.favouriteNews else { return UITableViewCell() }
-        cell.updateCell(with: dataForCell, networkService: networkService, favouriteNews: favouriteNews)
+        cell.updateCell(with: dataForCell, favouriteNews: favouriteNews)
         cell.mainCellDelegate = self
         return cell
     }
@@ -122,15 +120,15 @@ extension MainNewsView: UITableViewDelegate, UIScrollViewDelegate {
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let position = scrollView.contentOffset.y
-
+        
         if position > (newsTableView.contentSize.height - 100-scrollView.frame.size.height) {
-            guard let page = dataSourceForTable?.last?.nextPage else { return }
+            guard let page = dataSourceForTable?.last?.nexPage else { return }
             mainNewsVCDelegate?.fetchMoreNews(page: page)
         }
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let fetchedModel = dataSourceForTable?[indexPath.section].fetchedResults[indexPath.row] else { return }
+        guard let fetchedModel = dataSourceForTable?[indexPath.section].resultedFetch[indexPath.row] else { return }
         mainNewsVCDelegate?.goToDetailNews(model: fetchedModel)
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -139,12 +137,12 @@ extension MainNewsView: UITableViewDelegate, UIScrollViewDelegate {
 
 extension MainNewsView: MainNewsCellDelegate {
     
-    func removeModelFromCoredata(data: ResultedFetch) {
+    func removeModelFromCoredata(data: ResultedFetchResponse) {
         mainNewsVCDelegate?.removeModelFromCoredata(data: data)
     }
     
 
-    func saveIntoFavourites(data: ResultedFetch) {
+    func saveIntoFavourites(data: ResultedFetchResponse) {
         mainNewsVCDelegate?.saveIntoFavourites(data: data)
     }
 

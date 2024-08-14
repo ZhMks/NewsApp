@@ -27,7 +27,7 @@ final class FavouriteModelService {
     }
 
 
-    func saveToFavouriteModel(model: ResultedFetch) {
+    func saveToFavouriteModel(model: ResultedFetchResponse) {
         guard let modelsArray = self.modelsArray else { return }
         let favouriteToSave = FavouriteNewsModel(context: coredataService.context)
 
@@ -36,22 +36,25 @@ final class FavouriteModelService {
         }
 
         favouriteToSave.author = model.creator?.first
-        favouriteToSave.imageURL = model.imageUrl
         favouriteToSave.title = model.title
         favouriteToSave.newsText = model.description
         favouriteToSave.link = model.link
         favouriteToSave.pubDate = model.pubDate
+        favouriteToSave.image = model.imageURL
 
         coredataService.saveContext()
         initialFetch()
     }
 
-    func remove(fetchedModel: ResultedFetch?, savedModel: FavouriteNewsModel?) {
+    func remove(fetchedModel: ResultedFetchResponse?, savedModel: FavouriteNewsModel?) {
         if let fetchedModel = fetchedModel {
-            guard let modelToDelete = modelsArray?.first(where: { $0.title! == fetchedModel.title }) else { return }
+            guard let modelToDelete = modelsArray?.first(where: { model in
+                guard let title = model.title else { return false }
+                return title == fetchedModel.title
+            }) else { return }
             coredataService.deleteObject(model: modelToDelete)
         } else {
-            guard let modelToDelete = modelsArray?.first(where: { $0.title! == savedModel!.title }) else { return }
+            guard let savedModel = savedModel, let modelToDelete = modelsArray?.first(where: { $0.title == savedModel.title }) else { return }
             coredataService.deleteObject(model: modelToDelete)
         }
         coredataService.saveContext()
