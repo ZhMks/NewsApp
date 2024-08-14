@@ -16,6 +16,7 @@ final class DetailNewsViewController: UIViewController {
     let detailNewsView: DetailNewsView
     let fetchedResult: ResultedFetchResponse
     let favouritesService: FavouriteModelService
+    var fetchedImage: UIImage?
 
     // MARK: - Lifecycle
     init(detailNewsView: DetailNewsView, fetchedResult: ResultedFetchResponse, favouritesService: FavouriteModelService) {
@@ -45,7 +46,22 @@ final class DetailNewsViewController: UIViewController {
     // MARK: - Funcs
 
     private func updateViewData() {
-        detailNewsView.updateViewData(data: self.fetchedResult)
+        let fetchedImageview = UIImageView()
+        fetchedImageview.isHidden = true
+        if fetchedResult.imageURL == nil {
+            fetchedImage = nil
+        } else if let fetchString = fetchedResult.imageURL, let fetchURL = URL(string: fetchString) {
+            fetchedImageview.kf.setImage(with: fetchURL) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                case .success(let retrivedImage):
+                    self.fetchedImage = retrivedImage.image
+                    self.detailNewsView.updateViewData(data: self.fetchedResult, image: retrivedImage.image)
+                case .failure(_):
+                    self.detailNewsView.updateViewData(data: self.fetchedResult, image: nil)
+                }
+            }
+        }
     }
 
     private func setupNavigationBar() {
@@ -71,7 +87,7 @@ final class DetailNewsViewController: UIViewController {
     @objc private func rightButtonTouched(_ sender: UIBarButtonItem) {
 
         if sender.title == "Добавить в избранное" {
-            favouritesService.saveToFavouriteModel(model: fetchedResult)
+            favouritesService.saveToFavouriteModel(model: fetchedResult, image: self.fetchedImage)
             sender.title = "Удалить из избранного"
         } else {
             favouritesService.remove(fetchedModel: fetchedResult, savedModel: nil)

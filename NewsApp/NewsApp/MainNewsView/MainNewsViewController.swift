@@ -10,7 +10,7 @@ import UIKit
 protocol MainNewsVCDelegate: AnyObject {
     func fetchMoreNews(page: String)
     func goToDetailNews(model: ResultedFetchResponse)
-    func saveIntoFavourites(data: ResultedFetchResponse)
+    func saveIntoFavourites(data: ResultedFetchResponse, image: UIImage?)
     func removeModelFromCoredata(data: ResultedFetchResponse)
 }
 
@@ -83,8 +83,8 @@ extension MainNewsViewController: MainNewsVCDelegate {
     }
 
 
-    func saveIntoFavourites(data: ResultedFetchResponse) {
-        favouritesCoredataService.saveToFavouriteModel(model: data)
+    func saveIntoFavourites(data: ResultedFetchResponse, image: UIImage?) {
+        favouritesCoredataService.saveToFavouriteModel(model: data, image: image)
     }
 
     func fetchMoreNews(page: String) {

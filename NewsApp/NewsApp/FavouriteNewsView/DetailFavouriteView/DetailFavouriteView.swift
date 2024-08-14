@@ -11,7 +11,6 @@ final class DetailFavouriteView: UIView {
 
     // MARK: - Properties
     weak var detailFavouriteDelegate: DetailFavouriteDelegate?
-    var networkService: NetworkService?
 
     private var withImageConstraints: [NSLayoutConstraint] = []
     private var withImageWithoutDescr: [NSLayoutConstraint] = []
@@ -84,20 +83,13 @@ final class DetailFavouriteView: UIView {
 
     // MARK: - Funcs
 
-    func updateViewData(data: FavouriteNewsModel, networkService: NetworkService?) {
-        self.networkService = networkService
+    func updateViewData(data: FavouriteNewsModel) {
 
         configureLabels(with: data)
 
-        if let imageUrl = data.image, let requestURL = URL(string: imageUrl) {
-            newsImage.kf.setImage(with: requestURL, placeholder: UIImage(systemName: "photo.artframe")) { [weak self] result in
-                switch result {
-                case .success(let retrivedImage):
-                    self?.newsImage.image = retrivedImage.image
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
+        if let image = data.image {
+            guard let decodedImage = UIImage(data: image) else { return }
+            newsImage.image = decodedImage
         } else {
             newsImage.image = UIImage(systemName: "photo.artframe")
         }

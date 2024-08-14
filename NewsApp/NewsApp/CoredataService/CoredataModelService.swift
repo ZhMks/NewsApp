@@ -5,7 +5,7 @@
 //  Created by Максим Жуин on 09.08.2024.
 //
 
-import Foundation
+import UIKit
 
 final class FavouriteModelService {
 
@@ -27,7 +27,7 @@ final class FavouriteModelService {
     }
 
 
-    func saveToFavouriteModel(model: ResultedFetchResponse) {
+    func saveToFavouriteModel(model: ResultedFetchResponse, image: UIImage?) {
         guard let modelsArray = self.modelsArray else { return }
         let favouriteToSave = FavouriteNewsModel(context: coredataService.context)
 
@@ -35,12 +35,20 @@ final class FavouriteModelService {
             return
         }
 
+        if let image = image {
+            if image == UIImage(systemName: "photo.artframe") {
+                favouriteToSave.image = nil
+            } else {
+                guard let dataForImage = image.jpegData(compressionQuality: 0.8) else { return }
+                favouriteToSave.image = dataForImage
+            }
+        }
+
         favouriteToSave.author = model.creator?.first
         favouriteToSave.title = model.title
         favouriteToSave.newsText = model.description
         favouriteToSave.link = model.link
         favouriteToSave.pubDate = model.pubDate
-        favouriteToSave.image = model.imageURL
 
         coredataService.saveContext()
         initialFetch()

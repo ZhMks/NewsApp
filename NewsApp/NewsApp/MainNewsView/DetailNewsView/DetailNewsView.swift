@@ -84,19 +84,12 @@ final class DetailNewsView: UIView {
 
     // MARK: - Funcs
 
-    func updateViewData(data: ResultedFetchResponse) {
+    func updateViewData(data: ResultedFetchResponse, image: UIImage?) {
 
         configureLabels(with: data)
         
-        if let imageUrl = data.imageURL, let requestURL = URL(string: imageUrl) {
-            newsImage.kf.setImage(with: requestURL, placeholder: UIImage(systemName: "photo.artframe")) { [weak self] result in
-                switch result {
-                case .success(let retrivedImage):
-                    self?.newsImage.image = retrivedImage.image
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
+        if let image = image {
+            newsImage.image = image
         } else {
             newsImage.image = UIImage(systemName: "photo.artframe")
         }

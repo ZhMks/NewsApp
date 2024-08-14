@@ -10,7 +10,6 @@ import UIKit
 final class FavouriteNewsView: UIView {
 
     weak var favouritesVCDelegate: FavouriteNewsProtocol?
-    var networkService: NetworkService?
     var favouriteNews: [FavouriteNewsModel]?
 
     private lazy var newsTableView: UITableView = {
@@ -36,9 +35,8 @@ final class FavouriteNewsView: UIView {
 
     // MARK: - Funcs
 
-    func updateDataForView(data: [FavouriteNewsModel], networkService: NetworkService) {
+    func updateDataForView(data: [FavouriteNewsModel]) {
         self.favouriteNews = data
-        self.networkService = networkService
         newsTableView.reloadData()
     }
 
@@ -82,7 +80,7 @@ extension FavouriteNewsView: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: FavouriteNewsCell.identifier, for: indexPath) as? FavouriteNewsCell else { return UITableViewCell() }
         guard let dataForCell = favouriteNews?[indexPath.row] else { return UITableViewCell() }
-        cell.updateCell(with: dataForCell, networkService: self.networkService!)
+        cell.updateCell(with: dataForCell)
         return cell
     }
     

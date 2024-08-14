@@ -47,7 +47,7 @@ final class DetailFavouriteViewController: UIViewController {
     // MARK: - Funcs
 
     private func updateViewData() {
-        detailNewsView.updateViewData(data: self.favouriteModel, networkService: self.networkService)
+        detailNewsView.updateViewData(data: self.favouriteModel)
     }
 
     private func setupNavigationBar() {

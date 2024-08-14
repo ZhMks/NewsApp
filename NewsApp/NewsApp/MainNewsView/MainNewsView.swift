@@ -107,7 +107,7 @@ extension MainNewsView: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         guard let cell = tableView.dequeueReusableCell(withIdentifier: MainNewsTableViewCell.identifier, for: indexPath) as? MainNewsTableViewCell else { return UITableViewCell() }
         guard let networkModel = dataSourceForTable?[indexPath.section] else { return UITableViewCell() }
-        var dataForCell = networkModel.resultedFetch[indexPath.row]
+        let dataForCell = networkModel.resultedFetch[indexPath.row]
         guard let favouriteNews = self.favouriteNews else { return UITableViewCell() }
         cell.updateCell(with: dataForCell, favouriteNews: favouriteNews)
         cell.mainCellDelegate = self
@@ -142,8 +142,8 @@ extension MainNewsView: MainNewsCellDelegate {
     }
     
 
-    func saveIntoFavourites(data: ResultedFetchResponse) {
-        mainNewsVCDelegate?.saveIntoFavourites(data: data)
+    func saveIntoFavourites(data: ResultedFetchResponse, image: UIImage?) {
+        mainNewsVCDelegate?.saveIntoFavourites(data: data, image: image)
     }
 
 }

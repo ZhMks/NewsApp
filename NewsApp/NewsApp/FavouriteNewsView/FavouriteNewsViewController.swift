@@ -52,7 +52,7 @@ class FavouriteNewsViewController: UIViewController {
 
     func updateView() {
         guard let modelsArray = favouritesCoredataService.modelsArray else { return }
-        favouritesView.updateDataForView(data: modelsArray, networkService: self.networkService)
+        favouritesView.updateDataForView(data: modelsArray)
     }
 
     @objc private func reloadRowsWith() {

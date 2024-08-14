@@ -10,7 +10,7 @@ import Kingfisher
 
 
 protocol MainNewsCellDelegate: AnyObject {
-    func saveIntoFavourites(data: ResultedFetchResponse)
+    func saveIntoFavourites(data: ResultedFetchResponse, image: UIImage?)
     func removeModelFromCoredata(data: ResultedFetchResponse)
 }
 
@@ -157,7 +157,7 @@ final class MainNewsTableViewCell: UITableViewCell {
 
         if sender.backgroundImage(for: .normal) == UIImage(systemName: "star") {
             sender.setBackgroundImage(UIImage(systemName: "star.fill"), for: .normal)
-            mainCellDelegate?.saveIntoFavourites(data: data)
+            mainCellDelegate?.saveIntoFavourites(data: data, image: self.shortImagePreview.image)
         } else if sender.backgroundImage(for: .normal) == UIImage(systemName: "star.fill") {
             sender.setBackgroundImage(UIImage(systemName: "star"), for: .normal)
             mainCellDelegate?.removeModelFromCoredata(data: data)
