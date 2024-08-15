@@ -15,14 +15,12 @@ class FavouriteNewsViewController: UIViewController {
 
     // MARK: - Properties
     let favouritesView: FavouriteNewsView
-    let networkService: NetworkService
     let favouritesCoredataService: FavouriteModelService
 
     // MARK: - Lifecycle
 
-    init(favouritesView: FavouriteNewsView, networkService: NetworkService, favouritesCoredataService: FavouriteModelService) {
+    init(favouritesView: FavouriteNewsView, favouritesCoredataService: FavouriteModelService) {
         self.favouritesView = favouritesView
-        self.networkService = networkService
         self.favouritesCoredataService = favouritesCoredataService
         super.init(nibName: nil, bundle: nil)
     }
@@ -66,7 +64,7 @@ class FavouriteNewsViewController: UIViewController {
 extension FavouriteNewsViewController: FavouriteNewsProtocol {
     func goToDetailFavourite(model: FavouriteNewsModel) {
         let favouriteDetailView = DetailFavouriteView()
-        let detailFavouriteVC = DetailFavouriteViewController(detailNewsView: favouriteDetailView, networkService: self.networkService, favouriteModel: model, favouriteService: self.favouritesCoredataService)
+        let detailFavouriteVC = DetailFavouriteViewController(detailNewsView: favouriteDetailView, favouriteModel: model, favouriteService: self.favouritesCoredataService)
         navigationController?.pushViewController(detailFavouriteVC, animated: true)
     }
     

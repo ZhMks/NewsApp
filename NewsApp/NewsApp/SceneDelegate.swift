@@ -27,7 +27,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         navigationController.tabBarItem = UITabBarItem(title: "Главная", image: UIImage(systemName: "newspaper")!, tag: 0)
 
         let favouritesView = FavouriteNewsView()
-        let favouritesVC = FavouriteNewsViewController(favouritesView: favouritesView, networkService: networkService, favouritesCoredataService: favouriteCoredataService)
+        let favouritesVC = FavouriteNewsViewController(favouritesView: favouritesView, favouritesCoredataService: favouriteCoredataService)
         let favouriteNavigationVC = UINavigationController(rootViewController: favouritesVC)
         favouriteNavigationVC.tabBarItem = UITabBarItem(title: "Избранное", image: UIImage(systemName: "star"), tag: 1)
 

@@ -14,14 +14,12 @@ final class DetailFavouriteViewController: UIViewController {
 
     // MARK: - Properties
     let detailNewsView: DetailFavouriteView
-    let networkService: NetworkService
     let favouriteModel: FavouriteNewsModel
     let favouriteService: FavouriteModelService
 
     // MARK: - Lifecycle
-    init(detailNewsView: DetailFavouriteView, networkService: NetworkService, favouriteModel: FavouriteNewsModel, favouriteService: FavouriteModelService) {
+    init(detailNewsView: DetailFavouriteView, favouriteModel: FavouriteNewsModel, favouriteService: FavouriteModelService) {
         self.detailNewsView = detailNewsView
-        self.networkService = networkService
         self.favouriteModel = favouriteModel
         self.favouriteService = favouriteService
         super.init(nibName: nil, bundle: nil)
